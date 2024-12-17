@@ -14,9 +14,11 @@
     <color name="happy_green">#32CD32</color> <!-- LimeGreen -->
     <color name="happy_blue">#1E90FF</color> <!-- DodgerBlue -->
     <color name="happy_pink">#FF69B4</color> <!-- HotPink -->
-    <color name="hapy_turquoise">#66B6BC</color>
+    <color name="happy_turquoise">#66B6BC</color>
     <color name="happy_cream">#FFF9EF</color>
     <color name="happy_vanilla">#FFF4CA</color>
+    <color name="happy_purple">#BE78AD</color>
+    <color name="happy_gray">#DBDAD5</color>
 
 
     <!-- background_first_screen is the color of the first screen -->

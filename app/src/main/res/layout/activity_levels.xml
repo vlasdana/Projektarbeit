@@ -49,4 +49,111 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Farben Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/colorsCard"
+        android:layout_width="300dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="5dp"
+        app:cardCornerRadius="16dp"
+        app:cardBackgroundColor="@color/white"
+        app:cardElevation="12dp"
+        app:layout_constraintTop_toBottomOf="@id/fuxieImage"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginHorizontal="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="12dp">
+
+            <!-- Icon -->
+            <ImageView
+                android:id="@+id/colorsIcon"
+                android:layout_width="68dp"
+                android:layout_height="68dp"
+                android:src="@drawable/ic_colors"
+                android:contentDescription="Colors Icon" />
+
+            <!-- Text -->
+            <TextView
+                android:id="@+id/colorsText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Farben"
+                android:textSize="40sp"
+                android:textStyle="bold"
+                android:textColor="@color/happy_turquoise"
+                android:gravity="center"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"/>
+
+            <!-- Play Button -->
+            <ImageButton
+                android:id="@+id/colorsPlayButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/playbtn"
+                android:contentDescription="Play Colors" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Numbers Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/numbersCard"
+        android:layout_width="300dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="28dp"
+        app:cardCornerRadius="16dp"
+        app:cardBackgroundColor="@color/white"
+        app:cardElevation="12dp"
+        app:layout_constraintTop_toBottomOf="@id/colorsCard"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginHorizontal="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="12dp">
+
+            <!-- Icon -->
+            <ImageView
+                android:id="@+id/numbersIcon"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:src="@drawable/ic_numbers"
+                android:contentDescription="Numbers Icon" />
+
+            <!-- Text -->
+            <TextView
+                android:id="@+id/numbersText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Zahlen"
+                android:textSize="40sp"
+                android:textStyle="bold"
+                android:textColor="@color/happy_purple"
+                android:gravity="center"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"/>
+
+            <!-- Play Button -->
+            <ImageButton
+                android:id="@+id/numbersPlayButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/playbtn"
+                android:contentDescription="Play Numbers" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

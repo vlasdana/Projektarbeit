@@ -18,10 +18,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
         tools:targetApi="35">
-        <activity
-            android:name=".ChoiceActivity"
-            android:exported="false" />
-        <activity android:name=".LevelsActivity" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -37,6 +34,13 @@
         <activity
             android:name=".LanguageActivity"
             android:theme="@style/Theme.AppCompat.Dialog"></activity>
+        <activity
+            android:name=".ChoiceActivity"
+            android:exported="false" />
+        <activity android:name=".LevelsActivity" />
+        <activity android:name=".ColorsActivity" />
+        <activity android:name=".NumbersActivity" />
+
     </application>
 
 </manifest>

@@ -25,14 +25,7 @@ import android.widget.ImageView
 
 
 class SecondActivity : AppCompatActivity() {
-    /*
-    I define the Wake Word text, contextName, contextInformation an fill in my correct
-    Picovoice Access_key
-     */
-   /* private val ACCESS_KEY = "6iO+b3DnXa7KChT8r/3liZIuqurWDJzfOaCI2sie0qO5g59rheOsQA=="
-    private var wakeWordName = "Hello World"
-    private var contextName = "Ciprian2"
-    private var contextInformation = ""*/
+
 
     private val ACCESS_KEY = "0kXDK8vwhmMSSIxdO2PqBDDItFYmNzmXlhH/dNbXXIUU8MCazREmCw=="
     private var wakeWordName = "play game" // Replace with your actual wake word name
