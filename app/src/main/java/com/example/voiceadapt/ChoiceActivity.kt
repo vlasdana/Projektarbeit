@@ -64,6 +64,9 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (tts.isSpeaking) {
             tts.stop()
         }
+        // Oprește SpeechRecognizer-ul dacă este activ
+        speechRecognizer.cancel() // Oprește recunoașterea curentă
+        speechRecognizer.destroy() // Distruge instanța SpeechRecognizer
         val intent = Intent(this, LevelsActivity::class.java)
         startActivity(intent)
 
@@ -74,6 +77,9 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (tts.isSpeaking) {
             tts.stop()
         }
+        // Oprește SpeechRecognizer-ul dacă este activ
+        speechRecognizer.cancel() // Oprește recunoașterea curentă
+        speechRecognizer.destroy() // Distruge instanța SpeechRecognizer
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
         finish()
