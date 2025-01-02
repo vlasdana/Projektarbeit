@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">VoiceAdapt</string>
+    <string name="app_name">LingoPlay</string>
     <string name="pvWakeword">play game</string>
     <string name="pvContextName">lingoen</string>
 
