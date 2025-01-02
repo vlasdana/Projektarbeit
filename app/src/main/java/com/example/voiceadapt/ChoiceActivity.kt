@@ -60,11 +60,20 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun goToLevelsActivity() {
+        // Oprește TTS înainte de a trece la următoarea activitate
+        if (tts.isSpeaking) {
+            tts.stop()
+        }
         val intent = Intent(this, LevelsActivity::class.java)
         startActivity(intent)
+
     }
 
     private fun navigateBack() {
+        // Oprește TTS înainte de a reveni la activitatea anterioară
+        if (tts.isSpeaking) {
+            tts.stop()
+        }
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
         finish()
