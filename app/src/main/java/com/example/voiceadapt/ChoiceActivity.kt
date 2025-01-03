@@ -167,7 +167,21 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             override fun onEndOfSpeech() {}
 
             override fun onError(error: Int) {
-                Toast.makeText(this@ChoiceActivity, "Eroare: $error", Toast.LENGTH_SHORT).show()
+                val errorMessage = when (error) {
+                    SpeechRecognizer.ERROR_AUDIO -> "Audio-Fehler: Probleme bei der Audioaufnahme."
+                    SpeechRecognizer.ERROR_CLIENT -> "Client-Fehler: Interne Anwendungskommunikation fehlgeschlagen."
+                    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Berechtigungsfehler: Mikrofonzugriff verweigert."
+                    SpeechRecognizer.ERROR_NETWORK -> "Netzwerkfehler: Keine Verbindung zum Server."
+                    SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Netzwerk-Timeout: Server antwortet nicht."
+                    SpeechRecognizer.ERROR_NO_MATCH -> "Keine Übereinstimmung: Bitte wiederholen Sie Ihre Eingabe."
+                    SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Erkennungsfehler: Das System ist derzeit ausgelastet."
+                    SpeechRecognizer.ERROR_SERVER -> "Server-Fehler: Problem mit dem Erkennungsdienst."
+                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Zeitüberschreitung: Keine Sprache erkannt."
+                    else -> "Unbekannter Fehler: $error"
+                }
+
+                Toast.makeText(this@ChoiceActivity, errorMessage, Toast.LENGTH_LONG).show()
+
                 coroutineScope.launch {
                     delay(1000)
                     if (isListening) startListening()
@@ -179,7 +193,7 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 val command = matches?.get(0)?.lowercase(Locale.GERMAN) ?: ""
 
                 when {
-                    command.contains("play") -> goToLevelsActivity()
+                    command.contains("play") || command.contains("pley") -> goToLevelsActivity()
                     command.contains("zurück") || command.contains("zuruck") -> navigateBack()
                     else -> startListening()
                 }
