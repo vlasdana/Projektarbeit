@@ -3,8 +3,6 @@ package com.example.voiceadapt
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -12,22 +10,27 @@ import android.speech.tts.TextToSpeech
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.*
 import java.util.Locale
 import android.speech.tts.UtteranceProgressListener
-import androidx.annotation.RequiresApi
 import android.util.Log
 
 class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
+    // Gestionare coroutines
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
+    // Variabile pentru TTS și SpeechRecognizer
     private lateinit var tts: TextToSpeech
     private lateinit var speechRecognizer: SpeechRecognizer
     private var playButton: Button? = null
     private var playText: TextView? = null
     private var backButton: Button? = null
     private var backText: TextView? = null
-    private val handler = Handler(Looper.getMainLooper())
+    private var isListening = false  // Indicator pentru ascultare activă
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,36 +53,24 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         backButton = findViewById(R.id.backButton)
         backText = findViewById(R.id.backText)
 
+        // Setăm acțiunile pentru butoane
         playButton?.setOnClickListener {
+            stopAllProcesses() // Oprește totul înainte de a naviga
             goToLevelsActivity()
         }
 
         backButton?.setOnClickListener {
+            stopAllProcesses() // Oprește totul înainte de a naviga
             navigateBack()
         }
     }
 
     private fun goToLevelsActivity() {
-        // Oprește TTS înainte de a trece la următoarea activitate
-        if (tts.isSpeaking) {
-            tts.stop()
-        }
-        // Oprește SpeechRecognizer-ul dacă este activ
-        speechRecognizer.cancel() // Oprește recunoașterea curentă
-        speechRecognizer.destroy() // Distruge instanța SpeechRecognizer
         val intent = Intent(this, LevelsActivity::class.java)
         startActivity(intent)
-
     }
 
     private fun navigateBack() {
-        // Oprește TTS înainte de a reveni la activitatea anterioară
-        if (tts.isSpeaking) {
-            tts.stop()
-        }
-        // Oprește SpeechRecognizer-ul dacă este activ
-        speechRecognizer.cancel() // Oprește recunoașterea curentă
-        speechRecognizer.destroy() // Distruge instanța SpeechRecognizer
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
         finish()
@@ -87,12 +78,6 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
-            // Verifică limba germană
-            if (tts.isLanguageAvailable(Locale.GERMAN) == TextToSpeech.LANG_MISSING_DATA ||
-                tts.isLanguageAvailable(Locale.GERMAN) == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Toast.makeText(this, "Deutche Sparache nicht erkannt!", Toast.LENGTH_LONG).show()
-            }
-
             tts.language = Locale.GERMAN
 
             // Listener pentru TTS
@@ -100,41 +85,23 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 override fun onStart(utteranceId: String?) {}
 
                 override fun onDone(utteranceId: String?) {
-                    handler.post {
+                    coroutineScope.launch {
                         when (utteranceId) {
-                            "intro_message" -> {
-                                playText?.setTextColor(
-                                    ContextCompat.getColor(this@ChoiceActivity, R.color.happy_green)
-                                )
-                            }
-
+                            "intro_message" -> updateTextColor(playText, R.color.happy_green)
                             "play_instruction" -> {
-                                playText?.setTextColor(
-                                    ContextCompat.getColor(this@ChoiceActivity, R.color.black)
-                                )
-                                backText?.setTextColor(
-                                    ContextCompat.getColor(this@ChoiceActivity, R.color.happy_green)
-                                )
+                                updateTextColor(playText, R.color.black)
+                                updateTextColor(backText, R.color.happy_green)
                             }
 
                             "back_instruction" -> {
-                                backText?.setTextColor(
-                                    ContextCompat.getColor(this@ChoiceActivity, R.color.black)
-                                )
+                                updateTextColor(backText, R.color.black)
                                 // Adăugăm mesajul prompt
-                                tts.speak(
-                                    "Bitte sagen Sie 'Play' oder 'Zurück'",
-                                    TextToSpeech.QUEUE_FLUSH,
-                                    null,
-                                    "prompt_instruction"
-                                )
+                                speakPrompt()
                             }
 
                             "prompt_instruction" -> {
-                                // După mesajul prompt, începem ascultarea
-                                handler.postDelayed({
-                                    startListening()
-                                }, 1000) // Pauză mai mare pentru a evita eroarea 8
+                                delay(1000) // Pauză pentru a evita eroarea 8
+                                startListening()
                             }
                         }
                     }
@@ -143,38 +110,43 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 override fun onError(utteranceId: String?) {}
             })
 
-            // Mesajele inițiale
-            Thread {
-                tts.speak(
-                    "Hey, diese sind die Commandos für den Spiel",
-                    TextToSpeech.QUEUE_FLUSH,
-                    null,
-                    "intro_message"
-                )
-                tts.speak(
-                    "Um das Spiel zu starten, drücken Sie auf den Play-Knopf oder sagen Sie 'Play'.",
-                    TextToSpeech.QUEUE_ADD,
-                    null,
-                    "play_instruction"
-                )
-                tts.speak(
-                    "Um zurückzugehen, drücken Sie auf den Zurück-Knopf oder sagen Sie 'Zurück'.",
-                    TextToSpeech.QUEUE_ADD,
-                    null,
-                    "back_instruction"
-                )
-            }.start()
+            // Mesaje inițiale
+            startInitialMessages()
+        }
+    }
+
+    private fun startInitialMessages() {
+        coroutineScope.launch {
+            speak("Hey, diese sind die Commandos für den Spiel", "intro_message")
+            speak(
+                "Um das Spiel zu starten, drücken Sie auf den Play-Knopf oder sagen Sie 'Play'.",
+                "play_instruction"
+            )
+            speak(
+                "Um zurückzugehen, drücken Sie auf den Zurück-Knopf oder sagen Sie 'Zurück'.",
+                "back_instruction"
+            )
+        }
+    }
+
+    private suspend fun speak(text: String, utteranceId: String) {
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
+        while (tts.isSpeaking) {
+            delay(500) // Așteptăm să termine de vorbit
+        }
+    }
+
+    private fun speakPrompt() {
+        coroutineScope.launch {
+            speak("Bitte sagen Sie 'Play' oder 'Zurück'", "prompt_instruction")
         }
     }
 
     private fun startListening() {
         Log.d("SpeechRecognizer", "Zuhören startet...")
 
-        // Oprim TTS înainte de ascultare
-        if (tts.isSpeaking) {
-            Log.d("SpeechRecognizer", "TTS noch aktiv! Zwangss Gestoppt.")
-            tts.stop()
-        }
+        // Oprim TTS dacă e activ
+        stopTTS()
 
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -182,9 +154,8 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             putExtra(RecognizerIntent.EXTRA_PROMPT, "Bitte sagen Sie 'Play' oder 'Zurück'")
         }
 
-        handler.postDelayed({
-            speechRecognizer.startListening(intent)
-        }, 1000) // Pauză mai mare pentru a asigura eliberarea microfonului
+        isListening = true
+        speechRecognizer.startListening(intent)
     }
 
     private fun initSpeechRecognizer() {
@@ -196,36 +167,48 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             override fun onEndOfSpeech() {}
 
             override fun onError(error: Int) {
-                val message = when (error) {
-                    SpeechRecognizer.ERROR_NO_MATCH -> "Kein match. Versuchen Sie erneut!"
-                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Keine Stimme erkannt!"
-                    else -> "Fehler unerkannt! Cod: $error"
+                Toast.makeText(this@ChoiceActivity, "Eroare: $error", Toast.LENGTH_SHORT).show()
+                coroutineScope.launch {
+                    delay(1000)
+                    if (isListening) startListening()
                 }
-                Toast.makeText(this@ChoiceActivity, message, Toast.LENGTH_SHORT).show()
-
-                handler.postDelayed({
-                    startListening()
-                }, 1000)
             }
 
             override fun onResults(results: Bundle?) {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                if (matches != null) {
-                    val command = matches[0].lowercase(Locale.GERMAN)
-                    if (command.contains("play")) {
-                        goToLevelsActivity()
-                    } else if (command.contains("zurück") || command.contains("zuruck")) {
-                        navigateBack()
-                    } else {
-                        Toast.makeText(this@ChoiceActivity, "Ungültige Auswahl!", Toast.LENGTH_SHORT).show()
-                        startListening()
-                    }
+                val command = matches?.get(0)?.lowercase(Locale.GERMAN) ?: ""
+
+                when {
+                    command.contains("play") -> goToLevelsActivity()
+                    command.contains("zurück") || command.contains("zuruck") -> navigateBack()
+                    else -> startListening()
                 }
             }
 
             override fun onPartialResults(partialResults: Bundle?) {}
             override fun onEvent(eventType: Int, params: Bundle?) {}
         })
+    }
+
+    private fun stopAllProcesses() {
+        stopTTS()
+        stopSpeechRecognizer()
+        coroutineScope.cancel()
+    }
+
+    private fun stopTTS() {
+        if (tts.isSpeaking) {
+            tts.stop()
+        }
+    }
+
+    private fun stopSpeechRecognizer() {
+        speechRecognizer.cancel()
+        speechRecognizer.destroy()
+    }
+
+    private fun updateTextColor(textView: TextView?, colorId: Int) {
+        textView?.setTextColor(ContextCompat.getColor(this@ChoiceActivity, colorId))
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -235,12 +218,21 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
     }
 
+    override fun onPause() {
+        stopAllProcesses()
+        super.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Resetare completă la revenire
+        updateTextColor(playText, R.color.black)
+        updateTextColor(backText, R.color.black)
+       // startInitialMessages()
+    }
+
     override fun onDestroy() {
-        if (tts.isSpeaking) {
-            tts.stop()
-        }
-        tts.shutdown()
-        speechRecognizer.destroy()
+        stopAllProcesses()
         super.onDestroy()
     }
 }
