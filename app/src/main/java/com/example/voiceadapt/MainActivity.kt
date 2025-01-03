@@ -6,24 +6,33 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import android.app.Activity
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import android.speech.SpeechRecognizer
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.widget.ToggleButton
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.constraintlayout.widget.Guideline
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private var ttsCallback: (() -> Unit)? = null
     private var speechRecognizer: SpeechRecognizer? = null
     private var textToSpeech: TextToSpeech? = null
     private lateinit var intentTextView: TextView
@@ -31,37 +40,45 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private lateinit var errorTextView: TextView
     private lateinit var errorGuideline: Guideline
     private lateinit var recordButton: ToggleButton
-    private var isListening = false  // Variabilă pentru a verifica dacă ascultăm sau nu
+    private var isListening = false  // this is for checking if we are listening
+    private val handler = Handler(Looper.getMainLooper()) // for pausing
+
     private val languageResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val selectedLanguage = result.data?.getStringExtra("selected_language")
             languageTextView.text = "Selected language: $selectedLanguage"
-            speak("Hallo, ich bin Lingo. Magst du mit mir spielen? Wenn ja, sag play")
+            //spune mesajul de bun-venit
+            speak("Hallo, ich bin Lingo, magst du mit mir spielen ?")
+            // introducem secunde de intarziere sa evitam coliziunea intre tts si speechul nostru
+            handler.postDelayed({ startListening() }, 3000)
         }
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Inițializare UI
+        // initialise the UI
         window.decorView.setBackgroundColor(ContextCompat.getColor(this, R.color.background_first_screen))
         intentTextView = findViewById(R.id.intentView)
         errorTextView = findViewById(R.id.errorView)
         errorGuideline = findViewById(R.id.errorGuideLine)
         recordButton = findViewById(R.id.startButton)
         languageTextView = findViewById(R.id.language_text_view)
-        // Verifică permisiunile pentru audio
+        recordButton.visibility = Button.INVISIBLE
+
+        // check the audio permission
         if (!hasAudioPermission()) {
             requestAudioPermission()
         }
-        // Buton pentru alegerea limbii
+        // linking and setting up the action of the button for language setup
         val btnLanguage = findViewById<Button>(R.id.btn_mothertongue)
         btnLanguage.setOnClickListener {
+            recordButton.visibility = Button.VISIBLE
             val intent = Intent(this, LanguageActivity::class.java)
             languageResultLauncher.launch(intent)
         }
 
-        // Configurare SpeechRecognizer
+        // settings for SpeechRecognizer
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
         speechRecognizer?.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {
@@ -69,7 +86,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
 
             override fun onBeginningOfSpeech() {
-                intentTextView.text = "Höre zu..."
+                intentTextView.text = "🔴🟠🟡🟢 Höre zu..."
             }
 
             override fun onRmsChanged(rmsdB: Float) {}
@@ -77,20 +94,29 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             override fun onBufferReceived(buffer: ByteArray?) {}
 
             override fun onEndOfSpeech() {
-
-                if (isListening) {
-                    intentTextView.text = "Sprache beendet"
-                    startListening()  // Continuăm ascultarea dacă este activă
-                } else {
-                    intentTextView.text = "Zuhören beendet"
-                }
+                intentTextView.text = "🧿👀🧿Zuhören beendet"
+                // I remove the next lines of code to test a behavior that I think is wrong
+                /*  if (isListening) {
+                      intentTextView.text = "Sprache beendet"
+                      // I remove the next line to test a behavior that I think is wrong
+                     // handler.postDelayed({ startListening() }, 2000)
+                  } else {
+                      intentTextView.text = "Zuhören beendet"
+                  }*/
             }
 
             override fun onError(error: Int) {
-                intentTextView.text = "Eroare: ${getErrorDescription(error)}"
-                // În caz de eroare, încearcă să repornești recunoașterea vocală dacă ascultarea nu a fost oprită
-                if (isListening) {
-                    startListening()
+                val errorMessage = getErrorDescription(error)
+                intentTextView.text = "Fehler: $errorMessage}"
+                // we stop the listening on frequent errors to avoid loops
+                if(error == SpeechRecognizer.ERROR_NO_MATCH ) {
+                    stopListening()
+                    intentTextView.text = "Keine gültige Eingabe erkannt. Bitte nochmal versuchen!"
+                } else if(error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT){
+                    intentTextView.text = "Sag etwas bitte!"
+                    handler.postDelayed({startListening()}, 3000)
+                }else if (isListening) {
+                    handler.postDelayed({startListening()}, 3000)
                 }
             }
 
@@ -99,67 +125,107 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 val spokenText = matches?.get(0) ?: "Nicht erkannt"
                 intentTextView.text = "Du hast gesagt: $spokenText"
 
-                // Procesare răspunsuri predefinite
+                // answers processing
                 processSpeechResponse(spokenText)
 
-             //         val intent = Intent(this@MainActivity, ChoiceActivity::class.java)
-             //           startActivity(intent)
-
             }
-
 
             override fun onPartialResults(partialResults: Bundle?) {}
 
             override fun onEvent(eventType: Int, params: Bundle?) {}
         })
 
-        // Setare comportament pentru butonul de înregistrare
+        // pushing the recordButton will also go to the second screen
         recordButton.setOnClickListener {
-            if(isListening == false){if (hasRecordPermission()) {
-                startListening()
-                isListening = true
-                intentTextView.text = "Ich höre zu"
-            } else {
-                requestRecordPermission()
-            }
-        }else{isListening = false
-                stopListening()
+            stopListening() // stop listeningg
+            speak("Super! Lass uns spielen!")
+            try {
+                val intent = Intent(this, ChoiceActivity::class.java)
+                startActivity(intent)
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
-        // Inițializare TextToSpeech
-        textToSpeech = TextToSpeech(this, this)
+        // initialising TextToSpeech
+        textToSpeech = TextToSpeech(this, { status ->
+            if(status == TextToSpeech.SUCCESS){
+                textToSpeech?.setOnUtteranceProgressListener(object: UtteranceProgressListener(){
+                    override fun onDone(utteranceId: String?) {
+                        handler.post{
+                            ttsCallback?.invoke()
+                            ttsCallback = null
+                        }
+                    }
+                    override fun onStart(utteranceId: String?) {}
+                    override fun onError(utteranceId: String?) {}
+                })
+                textToSpeech?.language = Locale("de", "DE")
+            }
+        })
     }
 
     private fun startListening() {
+        stopListening()
+        if(isListening) return
 
+        isListening = true
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "de-De") // Setează limba germana
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "de-DE") // Set german language
             putExtra(RecognizerIntent.EXTRA_PROMPT, "Jetzt bitte sprechen...")
         }
-        speechRecognizer?.startListening(intent)
-
+        handler.post{
+            speechRecognizer?.startListening(intent)
+        }
     }
 
     private fun processSpeechResponse(spokenText: String) {
         val response = when {
-            spokenText.contains("hallo", ignoreCase = true) -> "Hallo! Magst du mit mir spielen?"
-
-            spokenText.contains("stop", ignoreCase = true) -> {
-                // Dacă se spune "stop", oprim ascultarea
+            spokenText.contains("nein", ignoreCase = true) || spokenText.contains("nö",ignoreCase = true) ->{
                 stopListening()
-                "Zuhören ist gestoppt" // Răspunsul care va fi spus
+                speak("Ohhh! Schade! Tschüss!")
+                finish()
+                return
             }
-            else -> "Bitte wiederholen!"
+            spokenText.contains("spielen", ignoreCase = true)
+                    || spokenText.contains("ich möchte spielen")
+                    || spokenText.contains("ja") -> {
+                stopListening() // stop listening
+
+                speak("Super! Spielen wir!")
+                try {
+                    speechRecognizer?.destroy()
+                    val intent = Intent(this, ChoiceActivity::class.java)
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+                return
+            }
+            spokenText.contains("stop", ignoreCase = true) -> {
+                // if "stop" is said, we stop listening
+                stopListening()
+
+                "Zuhören ist gestoppt"
+                return
+            }
+            else -> {
+                "Bitte wiederholen!"
+                isListening = true
+                return
+            }
         }
 
-        // Afișează răspunsul text pe ecran
+        // print the answer on the screen
         intentTextView.text = response
 
-        // Răspunde verbal prin TextToSpeech
+        // answer the response verbally with the text to speech
         speak(response)
-    }
 
+        if(isListening) {
+            handler.postDelayed({ startListening() }, 3000)
+        }
+    }
     private fun hasRecordPermission(): Boolean {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
     }
@@ -174,8 +240,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startListening()
             } else {
-                intentTextView.text = "Permisiune RECORD_AUDIO refuzată"
-                println("Permisiune RECORD_AUDIO refuzată")
+                intentTextView.text = "Permision RECORD_AUDIO refused"
             }
         }
     }
@@ -202,18 +267,23 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             SpeechRecognizer.ERROR_NO_MATCH -> "Kein Ereignis"
             SpeechRecognizer.ERROR_NETWORK -> "Netzwerk Fehler"
             SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Zeit überschritten"
-            else -> "Eroare necunoscută"
+            else -> "Unbekannte Fehler!"
         }
     }
     private fun stopListening() {
-        // Oprirea recunoașterii vocale
         speechRecognizer?.stopListening()
         isListening = false
         intentTextView.text = "Zuhören ist beendet."
     }
 
     private fun speak(text: String) {
-        textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+        coroutineScope.launch {
+            textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+            delay(100)
+            while(textToSpeech?.isSpeaking == true){
+                Thread.sleep(1000)
+            }
+        }
     }
 
     override fun onInit(status: Int) {
