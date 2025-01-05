@@ -1,5 +1,6 @@
 package com.example.voiceadapt
 
+
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -32,6 +33,9 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var backText: TextView? = null
     private var isListening = false  // Indicator pentru ascultare activă
 
+    // Variabilă pentru urmărirea navigării din LevelsActivity
+    private var navigateFromLevelActivity = false
+
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +60,9 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // Setăm acțiunile pentru butoane
         playButton?.setOnClickListener {
             stopAllProcesses() // Oprește totul înainte de a naviga
+          //  speechRecognizer?.destroy()
+         //   tts.shutdown()
+            navigateFromLevelActivity = true // Marcăm navigarea prin tap
             goToLevelsActivity()
         }
 
@@ -165,6 +172,8 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             override fun onRmsChanged(rmsdB: Float) {}
             override fun onBufferReceived(buffer: ByteArray?) {}
             override fun onEndOfSpeech() {}
+            override fun onPartialResults(partialResults: Bundle?) {}
+            override fun onEvent(eventType: Int, params: Bundle?) {}
 
             override fun onError(error: Int) {
                 val errorMessage = when (error) {
@@ -180,7 +189,8 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     else -> "Unbekannter Fehler: $error"
                 }
 
-                Toast.makeText(this@ChoiceActivity, errorMessage, Toast.LENGTH_LONG).show()
+                //Toast.makeText(this@ChoiceActivity, errorMessage, Toast.LENGTH_LONG).show()
+                showToastMessage(errorMessage)
 
                 coroutineScope.launch {
                     delay(1000)
@@ -193,20 +203,27 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 val command = matches?.get(0)?.lowercase(Locale.GERMAN) ?: ""
 
                 when {
-                    command.contains("play") || command.contains("pley") -> goToLevelsActivity()
+                    command.contains("play") || command.contains("pley") -> {navigateFromLevelActivity = true
+                    goToLevelsActivity()}
                     command.contains("zurück") || command.contains("zuruck") -> navigateBack()
                     else -> startListening()
                 }
             }
 
-            override fun onPartialResults(partialResults: Bundle?) {}
-            override fun onEvent(eventType: Int, params: Bundle?) {}
+
         })
     }
 
+    private fun showToastMessage(message: String) {
+        if (!isFinishing && !isDestroyed) {
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        }
+    }
+
     private fun stopAllProcesses() {
-        stopTTS()
-        stopSpeechRecognizer()
+        //stopTTS()
+       // stopSpeechRecognizer()
+        pauseAllProcesses()
         coroutineScope.cancel()
     }
 
@@ -233,17 +250,61 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     override fun onPause() {
-        stopAllProcesses()
         super.onPause()
+        pauseAllProcesses()
     }
 
-    override fun onResume() {
+    private fun pauseAllProcesses() {
+        // Punem pe pauză TTS dacă vorbește
+        if (tts.isSpeaking) {
+            tts.stop() // Oprește doar vorbirea activă, fără să distrugă instanța
+        }
+        // Suspendăm recunoașterea vocală
+        if (isListening) {
+            speechRecognizer.stopListening()
+            isListening = false // Marcam ascultarea ca inactivă
+        }
+    }
+
+   override fun onResume() {
         super.onResume()
-        // Resetare completă la revenire
+
+        // Reactivăm componentele fără a le recrea
+        if (!::tts.isInitialized) {
+            tts = TextToSpeech(this, this)
+        }
+
+        if (!::speechRecognizer.isInitialized) {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+            initSpeechRecognizer()
+        }
+
+        // Resetăm UI-ul
         updateTextColor(playText, R.color.black)
         updateTextColor(backText, R.color.black)
-       // startInitialMessages()
+
+      /*  // Reluăm ascultarea și mesajele doar dacă nu sunt deja active
+        if (!isListening && !tts.isSpeaking) {
+            startInitialMessages()
+        }*/
+
+       // Reluăm mesajele și ascultarea doar dacă:
+       // 1. Venim din LevelsActivity
+       // 2. Procesele nu sunt deja active
+      /* if (navigateFromLevelActivity || (!isListening && !tts.isSpeaking)) {
+           navigateFromLevelActivity = false
+           startInitialMessages()
+       }*/
+       if (navigateFromLevelActivity) {
+           navigateFromLevelActivity = false // Resetăm indicatorul
+           startInitialMessages()
+       } else if (!isListening && !tts.isSpeaking) {
+           startInitialMessages()
+       }
+
     }
+
+
 
     override fun onDestroy() {
         stopAllProcesses()
