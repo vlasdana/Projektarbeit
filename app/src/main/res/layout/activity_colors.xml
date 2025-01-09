@@ -222,7 +222,7 @@
         android:layout_marginTop="58dp"
         android:contentDescription="Brown Ball"
         android:layout_marginEnd="25dp"
-        android:src="@drawable/orange_ball"
+        android:src="@drawable/brown_ball"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/orangeBall" />
 
