@@ -9,6 +9,17 @@
     android:background="@color/happy_gray">
 
     <Button
+        android:id="@+id/playButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="288dp"
+        android:background="@drawable/playbtn"
+        android:contentDescription="Play Button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
         android:id="@+id/backButton"
         android:layout_width="48dp"
         android:layout_height="48dp"
@@ -19,14 +30,257 @@
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp" />
 
+
+    <ImageView
+        android:id="@+id/fuxiePlay"
+        android:layout_width="160dp"
+        android:layout_height="160dp"
+        android:layout_marginStart="40dp"
+        android:contentDescription="Fuxie Play"
+        android:src="@drawable/fuxie_play"
+        app:layout_constraintTop_toBottomOf="@+id/playButton"
+        app:layout_constraintStart_toStartOf="parent" />
+
+
+
+
+    <ImageView
+        android:id="@+id/firstArrowRight"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:contentDescription="Arrow Right Image"
+        android:layout_marginStart="35dp"
+        android:src="@drawable/arrow_right"
+        app:layout_constraintStart_toEndOf="@+id/fuxiePlay"
+        app:layout_constraintTop_toTopOf="@+id/redBall"
+        app:layout_constraintBottom_toBottomOf="@+id/redBall" />
+
+    <ImageView
+        android:id="@+id/redBall"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="92dp"
+        android:contentDescription="Red Ball"
+        android:src="@drawable/red_ball"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="43dp"
+        app:layout_constraintStart_toStartOf="@id/firstArrowRight"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/firstArrowDown"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="10dp"
+        android:contentDescription="Arrow Down Image"
+        android:layout_marginEnd="46dp"
+        android:src="@drawable/arrow_down"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/redBall" />
+
+    <ImageView
+        android:id="@+id/greenBall"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="10dp"
+        android:contentDescription="Green Ball"
+        android:layout_marginEnd="25dp"
+        android:src="@drawable/green_ball"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/firstArrowDown" />
+
+    <ImageView
+        android:id="@+id/firstArrowLeft"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="100dp"
+        android:contentDescription="Arrow Left Image"
+        android:src="@drawable/arrow_left"
+        app:layout_constraintEnd_toStartOf="@+id/greenBall"
+        app:layout_constraintTop_toBottomOf="@+id/firstArrowRight"
+        />
+
+    <ImageView
+        android:id="@+id/blueBall"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="10dp"
+        android:contentDescription="Blue Ball"
+        android:src="@drawable/blue_ball"
+        app:layout_constraintEnd_toStartOf="@+id/firstArrowLeft"
+        app:layout_constraintTop_toBottomOf="@+id/fuxiePlay" />
+
+    <ImageView
+        android:id="@+id/secondArrowLeft"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="100dp"
+        android:contentDescription="Arrow Left Image"
+        android:src="@drawable/arrow_left"
+        app:layout_constraintEnd_toStartOf="@+id/blueBall"
+        app:layout_constraintTop_toBottomOf="@+id/firstArrowRight"
+        />
+
+    <ImageView
+        android:id="@+id/yellowBall"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="10dp"
+        android:contentDescription="Yellow Ball"
+        android:src="@drawable/yellow_ball"
+        app:layout_constraintEnd_toStartOf="@+id/secondArrowLeft"
+        app:layout_constraintTop_toBottomOf="@+id/fuxiePlay" />
+
+    <ImageView
+        android:id="@+id/secondArrowDown"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="10dp"
+        android:contentDescription="Arrow Down Image"
+        android:layout_marginStart="46dp"
+        android:src="@drawable/arrow_down"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/yellowBall" />
+
+    <ImageView
+        android:id="@+id/pinkBall"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="10dp"
+        android:contentDescription="Pink Ball"
+        android:src="@drawable/pink_ball"
+        app:layout_constraintEnd_toStartOf="@+id/secondArrowLeft"
+        app:layout_constraintTop_toBottomOf="@+id/secondArrowDown" />
+
+    <ImageView
+        android:id="@+id/secondArrowRight"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="96dp"
+        android:contentDescription="Arrow Right Image"
+        android:src="@drawable/arrow_right"
+        app:layout_constraintStart_toEndOf="@+id/pinkBall"
+        app:layout_constraintTop_toBottomOf="@+id/secondArrowLeft"
+        />
+
+
+    <ImageView
+        android:id="@+id/violetBall"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="58dp"
+        android:layout_marginStart="10dp"
+        android:contentDescription="Violet Ball"
+        android:src="@drawable/violet_ball"
+        app:layout_constraintStart_toEndOf="@+id/secondArrowRight"
+        app:layout_constraintTop_toBottomOf="@+id/blueBall" />
+
+    <ImageView
+        android:id="@+id/thirdArrowRight"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="96dp"
+        android:contentDescription="Arrow Right Image"
+        android:src="@drawable/arrow_right"
+        app:layout_constraintStart_toEndOf="@+id/violetBall"
+        app:layout_constraintTop_toBottomOf="@+id/firstArrowLeft"
+        />
+
+    <ImageView
+        android:id="@+id/orangeBall"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="58dp"
+        android:contentDescription="Orange Ball"
+        android:layout_marginEnd="25dp"
+        android:src="@drawable/orange_ball"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/greenBall" />
+
+    <ImageView
+        android:id="@+id/thirdArrowDown"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="10dp"
+        android:contentDescription="Arrow Down Image"
+        android:layout_marginEnd="46dp"
+        android:src="@drawable/arrow_down"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/orangeBall" />
+
+    <ImageView
+        android:id="@+id/brownBall"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="58dp"
+        android:contentDescription="Brown Ball"
+        android:layout_marginEnd="25dp"
+        android:src="@drawable/orange_ball"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/orangeBall" />
+
+    <ImageView
+        android:id="@+id/thirdArrowLeft"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="100dp"
+        android:contentDescription="Arrow Left Image"
+        android:src="@drawable/arrow_left"
+        app:layout_constraintEnd_toStartOf="@+id/brownBall"
+        app:layout_constraintTop_toBottomOf="@+id/thirdArrowRight"
+        />
+
+    <ImageView
+        android:id="@+id/blackBall"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="58dp"
+        android:layout_marginEnd="10dp"
+        android:contentDescription="Black Ball"
+        android:src="@drawable/black_ball"
+        app:layout_constraintEnd_toStartOf="@+id/thirdArrowLeft"
+        app:layout_constraintTop_toBottomOf="@+id/violetBall" />
+
+    <ImageView
+        android:id="@+id/forthArrowLeft"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="100dp"
+        android:contentDescription="Arrow Left Image"
+        android:src="@drawable/arrow_left"
+        app:layout_constraintEnd_toStartOf="@+id/blackBall"
+        app:layout_constraintTop_toBottomOf="@+id/secondArrowRight"
+        />
+
+    <ImageView
+        android:id="@+id/whiteBall"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="58dp"
+        android:layout_marginEnd="10dp"
+        android:contentDescription="White Ball"
+        android:src="@drawable/white_ball"
+        app:layout_constraintEnd_toStartOf="@+id/forthArrowLeft"
+        app:layout_constraintTop_toBottomOf="@+id/pinkBall" />
+
     <ImageView
         android:id="@+id/forestImage"
         android:layout_width="140dp"
         android:layout_height="140dp"
         android:src="@drawable/forest"
         android:contentDescription="Forest Image"
-        android:layout_margin="10dp"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="50dp"
+
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
