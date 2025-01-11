@@ -15,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 
             // Back-Button finden und Tap-Funktionalität hinzufügen
             val backButton = findViewById<Button>(R.id.backButton)
-                backButton.setOnClickListener {
+            backButton.setOnClickListener {
                 val intent = Intent(this, LevelsActivity::class.java)
                 startActivity(intent)
                 finish()
