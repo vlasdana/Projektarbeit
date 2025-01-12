@@ -124,7 +124,7 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun startInitialMessages() {
         coroutineScope.launch {
-            speak("Hey, diese sind die Commandos für den Spiel", "intro_message")
+            speak("Diese sind die Commandos für den Spiel", "intro_message")
             speak(
                 "Um das Spiel zu starten, drücken Sie auf den Play-Knopf oder sagen Sie 'Play'.",
                 "play_instruction"
