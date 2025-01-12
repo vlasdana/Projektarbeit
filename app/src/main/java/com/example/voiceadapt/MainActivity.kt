@@ -24,6 +24,7 @@ import androidx.constraintlayout.widget.Guideline
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -32,6 +33,8 @@ import java.util.Locale
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
+
     private var ttsCallback: (() -> Unit)? = null
     private var speechRecognizer: SpeechRecognizer? = null
     private var textToSpeech: TextToSpeech? = null
@@ -48,7 +51,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             val selectedLanguage = result.data?.getStringExtra("selected_language")
             languageTextView.text = "Selected language: $selectedLanguage"
             //spune mesajul de bun-venit
-            speak("Hallo, ich bin Lingo, magst du mit mir spielen ?")
+            speak("Hey,ich bin Lingo, magst du mit mir spielen?")
             // introducem secunde de intarziere sa evitam coliziunea intre tts si speechul nostru
             handler.postDelayed({ startListening() }, 3000)
         }
@@ -84,27 +87,14 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             override fun onReadyForSpeech(params: Bundle?) {
                 intentTextView.text = "Bereit zum Hören"
             }
-
             override fun onBeginningOfSpeech() {
                 intentTextView.text = "🔴🟠🟡🟢 Höre zu..."
             }
-
             override fun onRmsChanged(rmsdB: Float) {}
-
             override fun onBufferReceived(buffer: ByteArray?) {}
-
             override fun onEndOfSpeech() {
                 intentTextView.text = "🧿👀🧿Zuhören beendet"
-                // I remove the next lines of code to test a behavior that I think is wrong
-                /*  if (isListening) {
-                      intentTextView.text = "Sprache beendet"
-                      // I remove the next line to test a behavior that I think is wrong
-                     // handler.postDelayed({ startListening() }, 2000)
-                  } else {
-                      intentTextView.text = "Zuhören beendet"
-                  }*/
             }
-
             override fun onError(error: Int) {
                 val errorMessage = getErrorDescription(error)
                 intentTextView.text = "Fehler: $errorMessage}"
@@ -119,7 +109,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     handler.postDelayed({startListening()}, 3000)
                 }
             }
-
             override fun onResults(results: Bundle?) {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val spokenText = matches?.get(0) ?: "Nicht erkannt"
@@ -129,19 +118,19 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 processSpeechResponse(spokenText)
 
             }
-
             override fun onPartialResults(partialResults: Bundle?) {}
-
             override fun onEvent(eventType: Int, params: Bundle?) {}
         })
 
         // pushing the recordButton will also go to the second screen
         recordButton.setOnClickListener {
             stopListening() // stop listeningg
-            speak("Super! Lass uns spielen!")
+            stopTTS()        // Oprire imediată a TTS
+
             try {
                 val intent = Intent(this, ChoiceActivity::class.java)
                 startActivity(intent)
+                finish()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -164,6 +153,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         })
     }
 
+
     private fun startListening() {
         stopListening()
         if(isListening) return
@@ -181,17 +171,18 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun processSpeechResponse(spokenText: String) {
         val response = when {
-            spokenText.contains("nein", ignoreCase = true) || spokenText.contains("nö",ignoreCase = true) ->{
+            // Dacă utilizatorul spune "nein" sau "nö"
+            spokenText.contains("nein", ignoreCase = true) || spokenText.contains("nö", ignoreCase = true) -> {
                 stopListening()
-                speak("Ohhh! Schade! Tschüss!")
-                finish()
+                speakAndReset("Ohhh, Schade! Tschüss!")  // Redă mesajul și resetează aplicația
                 return
             }
-            spokenText.contains("spielen", ignoreCase = true)
-                    || spokenText.contains("ich möchte spielen")
-                    || spokenText.contains("ja") -> {
-                stopListening() // stop listening
 
+            // Dacă utilizatorul spune "spielen" sau "ja"
+            spokenText.contains("spielen", ignoreCase = true)
+                    || spokenText.contains("ich möchte spielen", ignoreCase = true)
+                    || spokenText.contains("ja", ignoreCase = true) -> {
+                stopListening()
                 speak("Super! Spielen wir!")
                 try {
                     speechRecognizer?.destroy()
@@ -202,30 +193,57 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 }
                 return
             }
-            spokenText.contains("stop", ignoreCase = true) -> {
-                // if "stop" is said, we stop listening
-                stopListening()
 
-                "Zuhören ist gestoppt"
-                return
-            }
             else -> {
-                "Bitte wiederholen!"
+                speak("Bitte sag Ja oder Nein.")
                 isListening = true
                 return
             }
         }
 
-        // print the answer on the screen
+        // Afișează răspunsul pe ecran
         intentTextView.text = response
 
-        // answer the response verbally with the text to speech
-        speak(response)
-
-        if(isListening) {
+        // Reluăm ascultarea dacă este necesar
+        if (isListening) {
             handler.postDelayed({ startListening() }, 3000)
         }
     }
+
+    private fun speakAndReset(message: String) {
+        // Oprirea completă a SpeechRecognizer pentru a evita erorile
+        stopListening()
+        speechRecognizer?.cancel()
+        speechRecognizer?.destroy()
+        isListening = false  // Asigurăm că ascultarea este dezactivată
+
+        // Ștergem eventualele mesaje de eroare afișate
+        runOnUiThread {
+            intentTextView.text = ""  // Curățăm textul de pe ecran
+        }
+
+        textToSpeech?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {}
+
+            override fun onDone(utteranceId: String?) {
+                runOnUiThread {
+                    // Resetăm aplicația la starea inițială
+                    val intent = Intent(this@MainActivity, MainActivity::class.java)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(intent)
+                    finish()
+                }
+            }
+
+            override fun onError(utteranceId: String?) {}
+        })
+
+        // Redăm mesajul vocal
+        textToSpeech?.speak(message, TextToSpeech.QUEUE_FLUSH, null, "reset_message")
+    }
+
+
+
     private fun hasRecordPermission(): Boolean {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
     }
@@ -244,10 +262,13 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
         }
     }
+
     override fun onDestroy() {
         super.onDestroy()
+        coroutineScope.cancel()
         speechRecognizer?.destroy()
         textToSpeech?.shutdown()
+
     }
 
     companion object {
@@ -276,12 +297,20 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         intentTextView.text = "Zuhören ist beendet."
     }
 
+    private fun stopTTS() {
+        if (textToSpeech?.isSpeaking == true) {
+            textToSpeech?.stop()  // Oprire instantanee a TTS
+            textToSpeech?.shutdown()  // Eliberează resursele
+            textToSpeech = null
+        }
+    }
+
     private fun speak(text: String) {
         coroutineScope.launch {
             textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
             delay(100)
             while(textToSpeech?.isSpeaking == true){
-                Thread.sleep(1000)
+                delay(1000)
             }
         }
     }
