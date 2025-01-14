@@ -99,15 +99,14 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 null,
                 "intro_message"
             )
-            // startInitialMessages()
         }
     }
 
-    private fun startInitialMessages() {
+    private fun startInitialMessage() {
         coroutineScope.launch {
 
-            speakInGerman("Ich werde dir eine Farbe auf Englisch sagen, und du musst sie wiederholen.")
-            delay(500)
+            speakInGerman("Ich werde dir eine Farbe sagen, und du musst sie wiederholen.")
+            delay(1500)
             presentColor()
         }
     }
@@ -116,8 +115,8 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val color = colorList[currentColorIndex]
         showColorDot(color)
         speakInGerman("Das ist die Farbe ${getGermanColor(color)}.")
-        delay(1500)
-        speakInEnglish("This is $color. Please repeat after me: $color.", "color_instruction_$color")
+        delay(1400)
+        speakInEnglish("This is $color. Now repeat after me: $color.", "color_instruction_$color")
 
     }
     private fun startListeningForStartCommand() {
@@ -169,41 +168,69 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val spokenText = matches?.get(0)?.lowercase(Locale.GERMAN) ?: ""
 
-                // Verificare comenzi pentru Play și Zurück
-                if (spokenText == "play" || spokenText == "spiel" || spokenText == "spielen" || spokenText == "start") {
-                    showToastMessage("Spiel startet!")
-                    coroutineScope.launch {
-                        startInitialMessages()
+                when {
+                    //  Start joc (la început sau după reluare)
+                    spokenText in listOf("play", "spiel", "spielen", "start", "nochmal", "wiederholen") -> {
+                        showToastMessage("Spiel startet!")
+                        resetGameAndStart()  //  Reset complet și pornire joc
                     }
-                } else if (spokenText == "zurück" || spokenText == "zurueck" || spokenText == "back") {
-                    showToastMessage("Zurück zum Menü!")
-                    navigateBack()
-                } else if (isColorMatch(spokenText, colorList[currentColorIndex])) {
-                    // Verificare corectitudine culoare
-                    showToastMessage("Gut gemacht!")
-                    nextColor()
-                } else {
-                    // Feedback pentru răspuns greșit
-                    showToastMessage("Das war nicht korrekt. Versuche es nochmal.")
-                    startListeningForColor(colorList[currentColorIndex])
+
+                    //  Revenire la meniul principal
+                    spokenText in listOf("zurück", "zurueck", "back") -> {
+                        showToastMessage("Zurück zum Menü!")
+                        navigateBack()
+                    }
+
+                    //  Verificare culoare corectă
+                    isColorMatch(spokenText, colorList[currentColorIndex]) -> {
+                        showToastMessage("Gut gemacht!")
+                        nextColor()
+                    }
+
+                    //  Feedback pentru răspuns greșit
+                    else -> {
+                        showToastMessage("Das war nicht korrekt. Versuche es nochmal.")
+                        startListeningForColor(colorList[currentColorIndex])
+                    }
                 }
             }
 
+
         })
     }
-    // 🔎 Compară pronunția utilizatorului cu variațiile acceptate
+
+    private fun resetGameAndStart() {
+        //  Resetăm progresul și ascundem toate culorile
+        currentColorIndex = 0
+        hideAllColorDots()
+
+        //  Resetăm SpeechRecognizer
+        speechRecognizer.cancel()
+        speechRecognizer.destroy()
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+        initSpeechRecognizer()
+
+        //  Repornim jocul
+        coroutineScope.launch {
+            delay(500)
+            startInitialMessage()
+        }
+    }
+
+
+    //  Compară pronunția utilizatorului cu variațiile acceptate
     private fun isColorMatch(spokenText: String, expectedColor: String): Boolean {
         val colorVariations = mapOf(
-            "red" to listOf("red", "redd", "rad"),
+            "red" to listOf("red", "redd", "rad", "wred"),
             "green" to listOf("green", "grin", "gren"),
-            "blue" to listOf("blue", "blu", "bluu"),
+            "blue" to listOf("blue", "blu", "bluu", "blou"),
             "yellow" to listOf("yellow", "yello", "yelow"),
             "pink" to listOf("pink", "pynk", "ping"),
-            "violet" to listOf("violet", "violett", "vyolet","vylet"),
+            "violet" to listOf("violet", "violett", "vyolet","vailet"),
             "orange" to listOf("orange", "oranj", "orenge"),
             "brown" to listOf("brown", "broun", "braun", "breun"),
             "black" to listOf("black", "blak", "bleck"),
-            "white" to listOf("white", "whit", "whyte","uait")
+            "white" to listOf("white", "whait", "whyte","uait")
         )
 
         // Verificăm dacă textul rostit este o variație a culorii
@@ -224,8 +251,54 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         } else {
             coroutineScope.launch {
                 delay(1000)
-                speakInGerman("Super! Du hast alle Farben richtig wiederholt!") }
+                speakInGerman("Super! Du hast alle Farben richtig wiederholt!")
+                delay(1500)
+                askToReplayOrGoBack()
+            }
         }
+    }
+
+
+
+    private fun askToReplayOrGoBack() {
+        // Mesaj TTS pentru utilizator
+        textToSpeech.speak(
+            "Möchtest du dieses Spiel erneut spielen? Sage 'Play' zum Wiederholen oder 'Zurück' zum Menü.",
+            TextToSpeech.QUEUE_FLUSH,
+            null,
+            "replay_prompt"
+        )
+
+        // După ce mesajul vocal s-a încheiat, începe ascultarea răspunsului
+        textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {}
+            override fun onDone(utteranceId: String?) {
+                runOnUiThread {
+                    if (utteranceId?.startsWith("color_instruction_") == true) {
+                        val color = utteranceId.removePrefix("color_instruction_")
+                        startListeningForColor(color)  //  Pornește ascultarea
+                    } else if (utteranceId == "intro_message") {
+                        startListeningForStartCommand()  //  La început, ascultă comenzile Play/Zürück
+                    } else if (utteranceId == "replay_prompt") {
+                        startListeningForReplayOrBack()  //  După final, ascultă pentru reluare
+                    }
+                }
+            }
+            override fun onError(utteranceId: String?) {}
+        })
+    }
+
+    private fun startListeningForReplayOrBack() {
+        stopTTS()
+
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMAN)
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Sage 'Play' zum Wiederholen oder 'Zurück' zum Menü.")
+        }
+
+        isListening = true
+        speechRecognizer.startListening(intent)
     }
 
     private fun hideAllColorDots() {
@@ -310,6 +383,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     override fun onDestroy() {
         stopTTS()
+        speechRecognizer.cancel()
         speechRecognizer.destroy()
         coroutineScope.cancel()
         super.onDestroy()
