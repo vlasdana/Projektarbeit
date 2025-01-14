@@ -26,8 +26,15 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private lateinit var redBall: ImageView
     private lateinit var greenBall: ImageView
     private lateinit var blueBall: ImageView
+    private lateinit var yellowBall: ImageView
+    private lateinit var pinkBall: ImageView
+    private lateinit var violetBall: ImageView
+    private lateinit var orangeBall: ImageView
+    private lateinit var brownBall: ImageView
+    private lateinit var blackBall: ImageView
+    private lateinit var whiteBall: ImageView
 
-    private val colorList = listOf("red", "green", "blue")
+    private val colorList = listOf("red", "green", "blue", "yellow","pink","violet","orange","brown","black","white")
     private var currentColorIndex = 0
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -56,6 +63,13 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         redBall = findViewById(R.id.redBall)
         greenBall = findViewById(R.id.greenBall)
         blueBall = findViewById(R.id.blueBall)
+        yellowBall = findViewById(R.id.yellowBall)
+        pinkBall = findViewById(R.id.pinkBall)
+        violetBall = findViewById(R.id.violetBall)
+        orangeBall = findViewById(R.id.orangeBall)
+        brownBall = findViewById(R.id.brownBall)
+        blackBall = findViewById(R.id.blackBall)
+        whiteBall = findViewById(R.id.whiteBall)
 
         hideAllColorDots()
     }
@@ -67,7 +81,6 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             // Setăm listener-ul pentru TTS
             textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {}
-
                 override fun onDone(utteranceId: String?) {
                     runOnUiThread {
                         // Dacă a terminat pronunția în engleză, pornește ascultarea
@@ -140,7 +153,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val spokenText = matches?.get(0)?.lowercase(Locale.ENGLISH) ?: ""
 
-                if (spokenText == colorList[currentColorIndex]) {
+                if (isColorMatch(spokenText, colorList[currentColorIndex])) {
                     showToastMessage("Gut gemacht!")
                     nextColor()
                 } else {
@@ -150,6 +163,27 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
         })
     }
+    // 🔎 Compară pronunția utilizatorului cu variațiile acceptate
+    private fun isColorMatch(spokenText: String, expectedColor: String): Boolean {
+        val colorVariations = mapOf(
+            "red" to listOf("red", "redd", "rad"),
+            "green" to listOf("green", "grin", "gren"),
+            "blue" to listOf("blue", "blu", "bluu"),
+            "yellow" to listOf("yellow", "yello", "yelow"),
+            "pink" to listOf("pink", "pynk", "ping"),
+            "violet" to listOf("violet", "violett", "vyolet","vylet"),
+            "orange" to listOf("orange", "oranj", "orenge"),
+            "brown" to listOf("brown", "broun", "braun", "breun"),
+            "black" to listOf("black", "blak", "bleck"),
+            "white" to listOf("white", "whit", "whyte","uait")
+        )
+
+        // Verificăm dacă textul rostit este o variație a culorii
+        return colorVariations[expectedColor]?.any { variation ->
+            spokenText.contains(variation)
+        } ?: false
+    }
+
 
     private fun nextColor() {
         currentColorIndex++
@@ -170,6 +204,13 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         redBall.visibility = ImageView.INVISIBLE
         greenBall.visibility = ImageView.INVISIBLE
         blueBall.visibility = ImageView.INVISIBLE
+        yellowBall.visibility = ImageView.INVISIBLE
+        pinkBall.visibility = ImageView.INVISIBLE
+        violetBall.visibility = ImageView.INVISIBLE
+        orangeBall.visibility = ImageView.INVISIBLE
+        brownBall.visibility = ImageView.INVISIBLE
+        blackBall.visibility = ImageView.INVISIBLE
+        whiteBall.visibility = ImageView.INVISIBLE
     }
 
     private fun showColorDot(color: String) {
@@ -177,6 +218,13 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             "red" -> redBall.visibility = ImageView.VISIBLE
             "green" -> greenBall.visibility = ImageView.VISIBLE
             "blue" -> blueBall.visibility = ImageView.VISIBLE
+            "yellow" -> yellowBall.visibility = ImageView.VISIBLE
+            "pink" -> pinkBall.visibility = ImageView.VISIBLE
+            "violet" -> violetBall.visibility = ImageView.VISIBLE
+            "orange" -> orangeBall.visibility = ImageView.VISIBLE
+            "brown" -> brownBall.visibility = ImageView.VISIBLE
+            "black" -> blackBall.visibility = ImageView.VISIBLE
+            "white" -> whiteBall.visibility = ImageView.VISIBLE
         }
     }
 
@@ -185,6 +233,13 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             "red" -> "Rot"
             "green" -> "Grün"
             "blue" -> "Blau"
+            "yellow" -> "Gelb"
+            "pink" -> "Rosarot"
+            "violet" -> "Lila"
+            "orange" -> "Orange"
+            "brown" -> "Braun"
+            "black" -> "Schwarz"
+            "white" -> "Weiß"
             else -> color
         }
     }
