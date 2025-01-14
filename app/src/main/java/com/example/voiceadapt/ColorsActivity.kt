@@ -83,8 +83,9 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 override fun onStart(utteranceId: String?) {}
                 override fun onDone(utteranceId: String?) {
                     runOnUiThread {
-                        // Dacă a terminat pronunția în engleză, pornește ascultarea
-                        if (utteranceId?.startsWith("color_instruction_") == true) {
+                        if (utteranceId == "intro_message") {
+                            startListeningForStartCommand()
+                        } else if (utteranceId?.startsWith("color_instruction_") == true) {
                             val color = utteranceId.removePrefix("color_instruction_")
                             startListeningForColor(color)
                         }
@@ -92,15 +93,19 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 }
                 override fun onError(utteranceId: String?) {}
             })
-
-            startInitialMessages()
+            textToSpeech.speak(
+                "Willkommen in der Welt der Farben! Wenn du spielen möchtest, sage 'Play'. Für zurück sage 'Zurück'.",
+                TextToSpeech.QUEUE_FLUSH,
+                null,
+                "intro_message"
+            )
+            // startInitialMessages()
         }
     }
 
     private fun startInitialMessages() {
         coroutineScope.launch {
-            speakInGerman("Willkommen! Wir spielen mit Farben.")
-            delay(500)
+
             speakInGerman("Ich werde dir eine Farbe auf Englisch sagen, und du musst sie wiederholen.")
             delay(500)
             presentColor()
@@ -110,12 +115,22 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private suspend fun presentColor() {
         val color = colorList[currentColorIndex]
         showColorDot(color)
-
         speakInGerman("Das ist die Farbe ${getGermanColor(color)}.")
         delay(1500)
-
         speakInEnglish("This is $color. Please repeat after me: $color.", "color_instruction_$color")
 
+    }
+    private fun startListeningForStartCommand() {
+        stopTTS()
+
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMAN)
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Sag 'Play' zum Starten oder 'Zurück' um zurückzugehen.")
+        }
+
+        isListening = true
+        speechRecognizer.startListening(intent)
     }
 
     private fun startListeningForColor(expectedColor: String) {
@@ -149,18 +164,31 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 }
             }
 
+
             override fun onResults(results: Bundle?) {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                val spokenText = matches?.get(0)?.lowercase(Locale.ENGLISH) ?: ""
+                val spokenText = matches?.get(0)?.lowercase(Locale.GERMAN) ?: ""
 
-                if (isColorMatch(spokenText, colorList[currentColorIndex])) {
+                // Verificare comenzi pentru Play și Zurück
+                if (spokenText == "play" || spokenText == "spiel" || spokenText == "spielen" || spokenText == "start") {
+                    showToastMessage("Spiel startet!")
+                    coroutineScope.launch {
+                        startInitialMessages()
+                    }
+                } else if (spokenText == "zurück" || spokenText == "zurueck" || spokenText == "back") {
+                    showToastMessage("Zurück zum Menü!")
+                    navigateBack()
+                } else if (isColorMatch(spokenText, colorList[currentColorIndex])) {
+                    // Verificare corectitudine culoare
                     showToastMessage("Gut gemacht!")
                     nextColor()
                 } else {
+                    // Feedback pentru răspuns greșit
                     showToastMessage("Das war nicht korrekt. Versuche es nochmal.")
                     startListeningForColor(colorList[currentColorIndex])
                 }
             }
+
         })
     }
     // 🔎 Compară pronunția utilizatorului cu variațiile acceptate
@@ -234,7 +262,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             "green" -> "Grün"
             "blue" -> "Blau"
             "yellow" -> "Gelb"
-            "pink" -> "Rosarot"
+            "pink" -> "Rosa"
             "violet" -> "Lila"
             "orange" -> "Orange"
             "brown" -> "Braun"
