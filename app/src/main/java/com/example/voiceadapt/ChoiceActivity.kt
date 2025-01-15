@@ -126,11 +126,11 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         coroutineScope.launch {
             speak("Diese sind die Commandos für den Spiel", "intro_message")
             speak(
-                "Um das Spiel zu starten, drücken Sie auf den Play-Knopf oder sagen Sie 'Play'.",
+                "Um das Spiel zu starten, drück auf den Play-Knopf oder sag 'Play'.",
                 "play_instruction"
             )
             speak(
-                "Um zurückzugehen, drücken Sie auf den Zurück-Knopf oder sagen Sie 'Zurück'.",
+                "Um zurückzugehen, drück auf den Zurück-Knopf oder sag 'Zurück'.",
                 "back_instruction"
             )
         }
@@ -145,7 +145,7 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun speakPrompt() {
         coroutineScope.launch {
-            speak("Bitte sagen Sie 'Play' oder 'Zurück'", "prompt_instruction")
+            speak("Bitte sag 'Play' oder 'Zurück'", "prompt_instruction")
         }
     }
 
@@ -158,7 +158,7 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMAN)
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Bitte sagen Sie 'Play' oder 'Zurück'")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Bitte sag 'Play' oder 'Zurück'")
         }
 
         isListening = true

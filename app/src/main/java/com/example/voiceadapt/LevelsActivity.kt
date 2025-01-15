@@ -189,7 +189,7 @@ class LevelsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMAN)
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Bitte sagen Sie 'Farben', 'Zahlen', oder 'Zurück'")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Bitte sag 'Farben', 'Zahlen', oder 'Zurück'")
         }
 
         isListening = true
