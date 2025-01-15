@@ -1,5 +1,6 @@
 package com.example.voiceadapt
 
+
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -10,6 +11,7 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -19,7 +21,7 @@ import java.util.Locale
 class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main + Job())
-
+    private lateinit var progressBar: ProgressBar
     private lateinit var textToSpeech: TextToSpeech
     private lateinit var speechRecognizer: SpeechRecognizer
     private var isListening = false
@@ -36,6 +38,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private val colorList = listOf("red", "green", "blue", "yellow","pink","violet","orange","brown","black","white")
     private var currentColorIndex = 0
+    private var progressPercentage = 0
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +47,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         checkAudioPermission()
 
+        progressBar = findViewById(R.id.progressBar)
         textToSpeech = TextToSpeech(this, this)
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
         initSpeechRecognizer()
@@ -200,17 +204,16 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun resetGameAndStart() {
-        //  Resetăm progresul și ascundem toate culorile
         currentColorIndex = 0
+        progressPercentage = 0
+        progressBar.progress = progressPercentage
         hideAllColorDots()
 
-        //  Resetăm SpeechRecognizer
         speechRecognizer.cancel()
         speechRecognizer.destroy()
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
         initSpeechRecognizer()
 
-        //  Repornim jocul
         coroutineScope.launch {
             delay(500)
             startInitialMessage()
@@ -243,6 +246,10 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun nextColor() {
         currentColorIndex++
 
+        // Actualizare progres
+        progressPercentage = ((currentColorIndex.toFloat() / colorList.size) * 100).toInt()
+        progressBar.progress = progressPercentage
+
         if (currentColorIndex < colorList.size) {
             coroutineScope.launch {
                 delay(1000)
@@ -250,7 +257,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
         } else {
             coroutineScope.launch {
-                delay(1000)
+                delay(1500)
                 speakInGerman("Super! Du hast alle Farben richtig wiederholt!")
                 delay(1500)
                 askToReplayOrGoBack()
