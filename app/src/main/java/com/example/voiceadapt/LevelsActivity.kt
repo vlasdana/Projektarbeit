@@ -157,15 +157,11 @@ class LevelsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         coroutineScope.launch {
             speak("Super!", "intro_message")
             speak(
-                "Um das Farben Spiel zu starten, drücken Sie auf den Farben-Knopf oder sagen Sie 'Farben'.",
+                "Was möchtest du spielen? Sag einfach „Farben“ oder „Zahlen“. Oder drück auf den Play-Knopf.",
                 "play_instruction"
             )
             speak(
-                "Um das Zahlen Spiel zu starten, drücken Sie auf den Zahlen-Knopf oder sagen Sie 'Zahlen'.",
-                "play_instruction"
-            )
-            speak(
-                "Um zurückzugehen, drücken Sie auf den Zurück-Knopf oder sagen Sie 'Zurück'.",
+                "Um zurückzugehen, drück auf den Zurück-Knopf oder sag 'Zurück'.",
                 "back_instruction"
             )
         }
@@ -180,7 +176,7 @@ class LevelsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun speakPrompt() {
         coroutineScope.launch {
-            speak("Bitte sagen Sie 'Farben', 'Zahlen', oder 'Zurück'", "prompt_instruction")
+            speak("Bitte sag 'Farben', 'Zahlen', oder 'Zurück'", "prompt_instruction")
         }
     }
 
