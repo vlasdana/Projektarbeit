@@ -11,7 +11,7 @@
     <!-- New Happy Colors -->
     <color name="happy_yellow">#FFD700</color> <!-- Gold -->
     <color name="happy_orange">#FF941A</color> <!-- Orange -->
-    <color name="happy_green">#DCD4CA</color> <!-- LimeGreen -->
+    <color name="happy_green">#32CD32</color> <!-- LimeGreen -->
     <color name="happy_blue">#1E90FF</color> <!-- DodgerBlue -->
     <color name="happy_pink">#FF69B4</color> <!-- HotPink -->
     <color name="happy_turquoise">#66B6BC</color>

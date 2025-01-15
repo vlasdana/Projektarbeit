@@ -304,8 +304,6 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     }
 
-
-
     override fun onDestroy() {
         stopAllProcesses()
         super.onDestroy()

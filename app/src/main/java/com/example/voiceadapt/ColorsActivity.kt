@@ -98,7 +98,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 override fun onError(utteranceId: String?) {}
             })
             textToSpeech.speak(
-                "Willkommen in der Welt der Farben! Wenn du spielen möchtest, sage 'Play'. Für zurück sage 'Zurück'.",
+                "Willkommen in der Welt der Farben! Wenn du spielen möchtest, sag 'Play'. Für zurück sag 'Zurück'.",
                 TextToSpeech.QUEUE_FLUSH,
                 null,
                 "intro_message"
@@ -270,7 +270,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun askToReplayOrGoBack() {
         // Mesaj TTS pentru utilizator
         textToSpeech.speak(
-            "Möchtest du dieses Spiel erneut spielen? Sage 'Play' zum Wiederholen oder 'Zurück' zum Menü.",
+            "Möchtest du dieses Spiel erneut spielen? Sag 'Play' zum Wiederholen oder 'Zurück' zum Menü.",
             TextToSpeech.QUEUE_FLUSH,
             null,
             "replay_prompt"
@@ -301,7 +301,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMAN)
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Sage 'Play' zum Wiederholen oder 'Zurück' zum Menü.")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Sag 'Play' zum Wiederholen oder 'Zurück' zum Menü.")
         }
 
         isListening = true
