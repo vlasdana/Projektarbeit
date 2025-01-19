@@ -54,6 +54,8 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         val playButton = findViewById<Button>(R.id.playButton)
         playButton.setOnClickListener {
+            stopTTS()
+            stopSpeechRecognizer()
             coroutineScope.launch {
                 presentColor()
             }
@@ -78,6 +80,13 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         hideAllColorDots()
     }
 
+    private fun stopSpeechRecognizer() {
+        if (isListening) {
+            speechRecognizer.stopListening() // Oprește ascultarea
+            isListening = false
+        }
+    }
+
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             textToSpeech.language = Locale.GERMAN
@@ -99,7 +108,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             })
             textToSpeech.speak(
                 "Willkommen in der Welt der Farben! Wenn du spielen möchtest, sag 'Play'. Für zurück sag 'Zurück'.",
-                TextToSpeech.QUEUE_FLUSH,
+                TextToSpeech.QUEUE_ADD,
                 null,
                 "intro_message"
             )
@@ -271,7 +280,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // Mesaj TTS pentru utilizator
         textToSpeech.speak(
             "Möchtest du dieses Spiel erneut spielen? Sag 'Play' zum Wiederholen oder 'Zurück' zum Menü.",
-            TextToSpeech.QUEUE_FLUSH,
+            TextToSpeech.QUEUE_ADD,
             null,
             "replay_prompt"
         )
@@ -354,15 +363,15 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private suspend fun speakInGerman(text: String) {
         textToSpeech.language = Locale.GERMAN
-        textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "german_speech")
+        textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, null, "german_speech")
         while (textToSpeech.isSpeaking) {
-            delay(500)
+            delay(700)
         }
     }
 
     private fun speakInEnglish(text: String, utteranceId: String) {
         textToSpeech.language = Locale.ENGLISH
-        textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
+        textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, null, utteranceId)
     }
 
     private fun navigateBack() {
