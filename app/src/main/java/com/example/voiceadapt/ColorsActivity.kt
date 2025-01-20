@@ -39,6 +39,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private val colorList = listOf("red", "green", "blue", "yellow","pink","violet","orange","brown","black","white")
     private var currentColorIndex = 0
     private var progressPercentage = 0
+    private var isGameCompleted = false
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,10 +57,19 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         playButton.setOnClickListener {
             stopTTS()
             stopSpeechRecognizer()
-            coroutineScope.launch {
-                presentColor()
+
+            if (isGameCompleted) {
+                // Dacă jocul este complet, resetează nivelul
+                resetGameAndStart()
+                isGameCompleted = false // Resetează starea jocului
+            } else {
+                // Dacă jocul nu este complet, pornește normal prezentarea
+                coroutineScope.launch {
+                    presentColor()
+                }
             }
         }
+
 
         val backButton = findViewById<Button>(R.id.backButton)
         backButton.setOnClickListener {
@@ -90,7 +100,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             textToSpeech.language = Locale.GERMAN
-
+            textToSpeech.setSpeechRate(1.5f)
             // Setăm listener-ul pentru TTS
             textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {}
@@ -213,6 +223,9 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun resetGameAndStart() {
+        isGameCompleted = false // Resetăm starea jocului
+        stopTTS()
+
         currentColorIndex = 0
         progressPercentage = 0
         progressBar.progress = progressPercentage
@@ -253,6 +266,13 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
     private fun nextColor() {
+        if (isGameCompleted) {
+            // Oprire TTS și reluare joc dacă butonul Play a fost apăsat
+            stopTTS()
+            resetGameAndStart()
+            return
+        }
+
         currentColorIndex++
 
         // Actualizare progres
@@ -265,6 +285,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 presentColor()
             }
         } else {
+            isGameCompleted = true // Marcăm jocul ca finalizat
             coroutineScope.launch {
                 delay(1500)
                 speakInGerman("Super! Du hast alle Farben richtig wiederholt!")
@@ -276,8 +297,10 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
 
+
     private fun askToReplayOrGoBack() {
-        // Mesaj TTS pentru utilizator
+        if (!isGameCompleted) return // Dacă jocul nu e complet, nu afișăm mesajul
+
         textToSpeech.speak(
             "Möchtest du dieses Spiel erneut spielen? Sag 'Play' zum Wiederholen oder 'Zurück' zum Menü.",
             TextToSpeech.QUEUE_ADD,
@@ -285,24 +308,35 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             "replay_prompt"
         )
 
-        // După ce mesajul vocal s-a încheiat, începe ascultarea răspunsului
         textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {}
+
             override fun onDone(utteranceId: String?) {
                 runOnUiThread {
-                    if (utteranceId?.startsWith("color_instruction_") == true) {
-                        val color = utteranceId.removePrefix("color_instruction_")
-                        startListeningForColor(color)  //  Pornește ascultarea
-                    } else if (utteranceId == "intro_message") {
-                        startListeningForStartCommand()  //  La început, ascultă comenzile Play/Zürück
-                    } else if (utteranceId == "replay_prompt") {
-                        startListeningForReplayOrBack()  //  După final, ascultă pentru reluare
+                    when (utteranceId) {
+                        "replay_prompt" -> {
+                            if (isGameCompleted) {
+                                startListeningForReplayOrBack()
+                            }
+                        }
+                        "intro_message" -> {
+                            startListeningForStartCommand()
+                        }
+                        else -> {
+                            if (utteranceId?.startsWith("color_instruction_") == true) {
+                                val color = utteranceId.removePrefix("color_instruction_")
+                                startListeningForColor(color)
+                            }
+                        }
                     }
                 }
             }
+
             override fun onError(utteranceId: String?) {}
         })
     }
+
+
 
     private fun startListeningForReplayOrBack() {
         stopTTS()
