@@ -25,7 +25,6 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private lateinit var textToSpeech: TextToSpeech
     private lateinit var speechRecognizer: SpeechRecognizer
     private var isListening = false
-  //  private lateinit var numberImages: List<ImageView>
     private lateinit var nrZero: ImageView
     private lateinit var nrOne: ImageView
     private lateinit var nrTwo: ImageView
@@ -41,6 +40,8 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private val numberList = listOf("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")
     private var currentNumberIndex = 0
     private var progressPercentage = 0
+    private var isGameCompleted = false
+
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,11 +56,20 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         initSpeechRecognizer()
 
         val playButton = findViewById<Button>(R.id.playButton)
+
         playButton.setOnClickListener {
             stopTTS()
             stopSpeechRecognizer()
-            coroutineScope.launch {
-                presentNumber()
+
+            if (isGameCompleted) {
+                // Dacă jocul este complet, resetează nivelul
+                resetGameAndStart()
+                isGameCompleted = false // Resetează starea jocului
+            } else {
+                // Dacă jocul nu este complet, pornește normal prezentarea
+                coroutineScope.launch {
+                    presentNumber()
+                }
             }
         }
 
@@ -92,16 +102,21 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             textToSpeech.language = Locale.GERMAN
+            textToSpeech.setSpeechRate(2.5f)
 
             textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {}
                 override fun onDone(utteranceId: String?) {
+
                     runOnUiThread {
                         if (utteranceId == "intro_message") {
                             startListeningForStartCommand()
                         } else if (utteranceId?.startsWith("number_instruction_") == true) {
                             val number = utteranceId.removePrefix("number_instruction_")
                             startListeningForNumber(number)
+                        } else if (utteranceId == "replay_prompt") {
+                            stopTTS()
+                            startListeningForReplayOrBack()
                         }
                     }
                 }
@@ -130,7 +145,7 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val number = numberList[currentNumberIndex]
         showNumberImage(number)
         speakInGerman("Das ist die Zahl ${getGermanNumber(number)}.")
-        delay(1500)
+        delay(1200)
         speakInEnglish("This is $number. Now repeat after me: $number.", "number_instruction_$number")
     }
 
@@ -213,6 +228,9 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun resetGameAndStart() {
+        isGameCompleted = false // Resetăm starea jocului
+        stopTTS()
+
         currentNumberIndex = 0
         progressPercentage = 0
         progressBar.progress = progressPercentage
@@ -251,6 +269,13 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun nextNumber() {
+
+        if (isGameCompleted) {
+            // Oprire TTS și reluare joc dacă butonul Play a fost apăsat
+            stopTTS()
+            resetGameAndStart()
+            return
+        }
         currentNumberIndex++
 
         progressPercentage = ((currentNumberIndex.toFloat() / numberList.size) * 100).toInt()
@@ -262,8 +287,10 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 presentNumber()
             }
         } else {
+            isGameCompleted = true // Marcam jocul ca finalizat
             coroutineScope.launch {
                 delay(1500)
+                if (!isGameCompleted) return@launch
                 speakInGerman("Super! Du hast alle Zahlen richtig wiederholt!")
                 delay(1500)
                 askToReplayOrGoBack()
@@ -272,6 +299,8 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun askToReplayOrGoBack() {
+        if (!isGameCompleted) return // Dacă jocul nu e complet, nu afișăm mesajul
+
         textToSpeech.speak(
             "Möchtest du dieses Spiel erneut spielen? Sag 'Play' zum Wiederholen oder 'Zurück' zum Menü.",
             TextToSpeech.QUEUE_ADD,
@@ -281,21 +310,36 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {}
+
             override fun onDone(utteranceId: String?) {
                 runOnUiThread {
-                    if (utteranceId?.startsWith("number_instruction_") == true) {
-                        val number = utteranceId.removePrefix("number_instruction_")
-                        startListeningForNumber(number)  //  Pornește ascultarea
-                    } else if (utteranceId == "intro_message") {
-                        startListeningForStartCommand()  //  La început, ascultă comenzile Play/Zürück
-                    } else if (utteranceId == "replay_prompt") {
-                        startListeningForReplayOrBack()  //  După final, ascultă pentru reluare
+                    when (utteranceId) {
+                        "replay_prompt" -> {
+                            // Ascultăm comenzile Play sau Zurück după mesajul de reluare
+                            if (isGameCompleted) {
+                                startListeningForReplayOrBack()
+                            }
+                        }
+                        "intro_message" -> {
+                            // La început, ascultăm comenzile de start
+                            startListeningForStartCommand()
+                        }
+                        else -> {
+                            // Gestionăm alte mesaje (cum ar fi cele pentru numere)
+                            if (utteranceId?.startsWith("number_instruction_") == true) {
+                                val number = utteranceId.removePrefix("number_instruction_")
+                                startListeningForNumber(number)
+                            }
+                        }
                     }
                 }
             }
+
             override fun onError(utteranceId: String?) {}
         })
     }
+
+
 
     private fun startListeningForReplayOrBack() {
         stopTTS()
