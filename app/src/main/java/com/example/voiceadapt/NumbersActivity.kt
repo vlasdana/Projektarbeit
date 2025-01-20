@@ -102,7 +102,7 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             textToSpeech.language = Locale.GERMAN
-            textToSpeech.setSpeechRate(2.5f)
+            textToSpeech.setSpeechRate(1.5f)
 
             textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {}

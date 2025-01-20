@@ -25,7 +25,7 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private val coroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     // Variabile pentru TTS și SpeechRecognizer
-    private lateinit var tts: TextToSpeech
+    private lateinit var textToSpeech: TextToSpeech
     private lateinit var speechRecognizer: SpeechRecognizer
     private var playButton: Button? = null
     private var playText: TextView? = null
@@ -45,7 +45,7 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         checkAudioPermission()
 
         // Inițializăm TTS
-        tts = TextToSpeech(this, this)
+        textToSpeech = TextToSpeech(this, this)
 
         // Inițializăm Speech Recognizer
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
@@ -85,10 +85,11 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
-            tts.language = Locale.GERMAN
+            textToSpeech.language = Locale.GERMAN
+            textToSpeech.setSpeechRate(1.5f)
 
             // Listener pentru TTS
-            tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {}
 
                 override fun onDone(utteranceId: String?) {
@@ -137,8 +138,8 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private suspend fun speak(text: String, utteranceId: String) {
-        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
-        while (tts.isSpeaking) {
+        textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
+        while (textToSpeech.isSpeaking) {
             delay(500) // Așteptăm să termine de vorbit
         }
     }
@@ -228,8 +229,8 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun stopTTS() {
-        if (tts.isSpeaking) {
-            tts.stop()
+        if (textToSpeech.isSpeaking) {
+            textToSpeech.stop()
         }
     }
 
@@ -256,8 +257,8 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun pauseAllProcesses() {
         // Punem pe pauză TTS dacă vorbește
-        if (tts.isSpeaking) {
-            tts.stop() // Oprește doar vorbirea activă, fără să distrugă instanța
+        if (textToSpeech.isSpeaking) {
+            textToSpeech.stop() // Oprește doar vorbirea activă, fără să distrugă instanța
         }
         // Suspendăm recunoașterea vocală
         if (isListening) {
@@ -270,8 +271,8 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onResume()
 
         // Reactivăm componentele fără a le recrea
-        if (!::tts.isInitialized) {
-            tts = TextToSpeech(this, this)
+        if (!::textToSpeech.isInitialized) {
+            textToSpeech = TextToSpeech(this, this)
         }
 
         if (!::speechRecognizer.isInitialized) {
@@ -283,22 +284,10 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         updateTextColor(playText, R.color.black)
         updateTextColor(backText, R.color.black)
 
-      /*  // Reluăm ascultarea și mesajele doar dacă nu sunt deja active
-        if (!isListening && !tts.isSpeaking) {
-            startInitialMessages()
-        }*/
-
-       // Reluăm mesajele și ascultarea doar dacă:
-       // 1. Venim din LevelsActivity
-       // 2. Procesele nu sunt deja active
-      /* if (navigateFromLevelActivity || (!isListening && !tts.isSpeaking)) {
-           navigateFromLevelActivity = false
-           startInitialMessages()
-       }*/
        if (navigateFromLevelActivity) {
            navigateFromLevelActivity = false // Resetăm indicatorul
            startInitialMessages()
-       } else if (!isListening && !tts.isSpeaking) {
+       } else if (!isListening && !textToSpeech.isSpeaking) {
            startInitialMessages()
        }
 
