@@ -41,33 +41,28 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_choice)
 
-        // Verifică permisiunile audio
-        checkAudioPermission()
-
-        // Inițializăm TTS
+        // Initialise TTS
         textToSpeech = TextToSpeech(this, this)
 
-        // Inițializăm Speech Recognizer
+        // Initialize Speech Recognizer
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
         initSpeechRecognizer()
 
-        // Inițializăm butoanele și textele
+        // Initialize buttons and text
         playButton = findViewById(R.id.playButton)
         playText = findViewById(R.id.playText)
         backButton = findViewById(R.id.backButton)
         backText = findViewById(R.id.backText)
 
-        // Setăm acțiunile pentru butoane
+        // Set actions for buttons
         playButton?.setOnClickListener {
-            stopAllProcesses() // Oprește totul înainte de a naviga
-          //  speechRecognizer?.destroy()
-         //   tts.shutdown()
-            navigateFromLevelActivity = true // Marcăm navigarea prin tap
+            stopAllProcesses() // Stops everything before navigation
+            navigateFromLevelActivity = true // Mark tap navigation
             goToLevelsActivity()
         }
 
         backButton?.setOnClickListener {
-            stopAllProcesses() // Oprește totul înainte de a naviga
+            stopAllProcesses() // Stops all processes before navigation
             navigateBack()
         }
     }
@@ -88,7 +83,7 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             textToSpeech.language = Locale.GERMAN
             textToSpeech.setSpeechRate(1.5f)
 
-            // Listener pentru TTS
+            // Listener for TTS
             textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {}
 
@@ -103,12 +98,12 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
                             "back_instruction" -> {
                                 updateTextColor(backText, R.color.black)
-                                // Adăugăm mesajul prompt
+                                // prompt message
                                 speakPrompt()
                             }
 
                             "prompt_instruction" -> {
-                                delay(1000) // Pauză pentru a evita eroarea 8
+                                delay(1000) // Pause to avoid error 8
                                 startListening()
                             }
                         }
@@ -118,7 +113,6 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 override fun onError(utteranceId: String?) {}
             })
 
-            // Mesaje inițiale
             startInitialMessages()
         }
     }
@@ -140,7 +134,7 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private suspend fun speak(text: String, utteranceId: String) {
         textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
         while (textToSpeech.isSpeaking) {
-            delay(500) // Așteptăm să termine de vorbit
+            delay(500) // Wait to stop talking
         }
     }
 
@@ -153,7 +147,7 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun startListening() {
         Log.d("SpeechRecognizer", "Zuhören startet...")
 
-        // Oprim TTS dacă e activ
+        // Stop TTS if active
         stopTTS()
 
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -190,7 +184,6 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     else -> "Unbekannter Fehler: $error"
                 }
 
-                //Toast.makeText(this@ChoiceActivity, errorMessage, Toast.LENGTH_LONG).show()
                 showToastMessage(errorMessage)
 
                 coroutineScope.launch {
@@ -222,8 +215,6 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun stopAllProcesses() {
-        //stopTTS()
-       // stopSpeechRecognizer()
         pauseAllProcesses()
         coroutineScope.cancel()
     }
@@ -234,20 +225,8 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
     }
 
-    private fun stopSpeechRecognizer() {
-        speechRecognizer.cancel()
-        speechRecognizer.destroy()
-    }
-
     private fun updateTextColor(textView: TextView?, colorId: Int) {
         textView?.setTextColor(ContextCompat.getColor(this@ChoiceActivity, colorId))
-    }
-
-    @RequiresApi(Build.VERSION_CODES.M)
-    private fun checkAudioPermission() {
-        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 1)
-        }
     }
 
     override fun onPause() {

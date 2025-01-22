@@ -45,9 +45,6 @@ class LevelsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_levels)
 
-
-        checkAudioPermission()
-
         // Initialize TTS
         textToSpeech = TextToSpeech(this, this)
 
@@ -285,13 +282,6 @@ class LevelsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun updateTextColor(textView: TextView?, colorId: Int) {
         textView?.setTextColor(ContextCompat.getColor(this@LevelsActivity, colorId))
-    }
-
-    @RequiresApi(Build.VERSION_CODES.M)
-    private fun checkAudioPermission() {
-        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 1)
-        }
     }
 
     override fun onPause() {

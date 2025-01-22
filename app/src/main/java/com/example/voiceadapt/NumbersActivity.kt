@@ -48,8 +48,6 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_numbers)
 
-        checkAudioPermission()
-
         progressBar = findViewById(R.id.progressBar)
         textToSpeech = TextToSpeech(this, this)
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
@@ -430,12 +428,6 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
-    private fun checkAudioPermission() {
-        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 1)
-        }
-    }
 
     override fun onDestroy() {
         stopTTS()

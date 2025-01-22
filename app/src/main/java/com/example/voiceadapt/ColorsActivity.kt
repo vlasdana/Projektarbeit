@@ -46,8 +46,6 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_colors)
 
-        checkAudioPermission()
-
         progressBar = findViewById(R.id.progressBar)
         textToSpeech = TextToSpeech(this, this)
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
@@ -295,9 +293,6 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
     }
 
-
-
-
     private fun askToReplayOrGoBack() {
         if (!isGameCompleted) return // If the game is not complete, do not display the message
 
@@ -335,8 +330,6 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             override fun onError(utteranceId: String?) {}
         })
     }
-
-
 
     private fun startListeningForReplayOrBack() {
         stopTTS()
@@ -424,12 +417,6 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
-    private fun checkAudioPermission() {
-        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 1)
-        }
-    }
 
     override fun onDestroy() {
         stopTTS()
