@@ -84,23 +84,20 @@ class LevelsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun goToColorsActivity() {
         pauseAllProcesses()
-
 // Set the indicator that we are coming from a sub-activity (ColorsActivity)
         navigateFromSubActivity = true
         val intent = Intent(this, ColorsActivity::class.java)
         startActivity(intent)
-
+        finish()
     }
 
     private fun goToNumbersActivity() {
-
         pauseAllProcesses()
-
 // Set the indicator that we are coming from a sub-activity (NumbersActivity)
         navigateFromSubActivity = true
         val intent = Intent(this, NumbersActivity::class.java)
         startActivity(intent)
-
+        finish()
     }
 
     private fun navigateBack() {

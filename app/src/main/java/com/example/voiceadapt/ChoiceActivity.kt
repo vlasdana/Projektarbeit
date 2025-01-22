@@ -70,6 +70,7 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun goToLevelsActivity() {
         val intent = Intent(this, LevelsActivity::class.java)
         startActivity(intent)
+        finish()
     }
 
     private fun navigateBack() {
