@@ -50,9 +50,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (result.resultCode == Activity.RESULT_OK) {
             val selectedLanguage = result.data?.getStringExtra("selected_language")
             languageTextView.text = "Selected language: $selectedLanguage"
-            //spune mesajul de bun-venit
             speak("Hey,ich bin Lingo, magst du mit mir spielen?")
-            // introducem secunde de intarziere sa evitam coliziunea intre tts si speechul nostru
+            // introduce a delay of a few seconds to avoid collisions between TTS and user speech
             handler.postDelayed({ startListening() }, 3000)
         }
     }
@@ -124,9 +123,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         // pushing the recordButton will also go to the second screen
         recordButton.setOnClickListener {
-            stopListening() // stop listeningg
-            stopTTS()        // Oprire imediată a TTS
-
+            stopListening()
+            stopTTS()
             try {
                 val intent = Intent(this, ChoiceActivity::class.java)
                 startActivity(intent)
@@ -171,14 +169,14 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun processSpeechResponse(spokenText: String) {
         val response = when {
-            // Dacă utilizatorul spune "nein" sau "nö"
+            // If user says "nein" or "nö"
             spokenText.contains("nein", ignoreCase = true) || spokenText.contains("nö", ignoreCase = true) -> {
                 stopListening()
-                speakAndReset("Ohhh, Schade! Tschüss!")  // Redă mesajul și resetează aplicația
+                speakAndReset("Ohhh, Schade! Tschüss!")  // Replay the message and reset the application.
                 return
             }
 
-            // Dacă utilizatorul spune "spielen" sau "ja"
+            // If user says "spielen" sau "ja"
             spokenText.contains("spielen", ignoreCase = true)
                     || spokenText.contains("ich möchte spielen", ignoreCase = true)
                     || spokenText.contains("ja", ignoreCase = true) -> {
@@ -201,25 +199,25 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
         }
 
-        // Afișează răspunsul pe ecran
+        // Display the response on the screen
         intentTextView.text = response
 
-        // Reluăm ascultarea dacă este necesar
+        // Restart listening if necessary.
         if (isListening) {
             handler.postDelayed({ startListening() }, 3000)
         }
     }
 
     private fun speakAndReset(message: String) {
-        // Oprirea completă a SpeechRecognizer pentru a evita erorile
+        // Complete shutdown of the SpeechRecognizer to avoid errors
         stopListening()
         speechRecognizer?.cancel()
         speechRecognizer?.destroy()
-        isListening = false  // Asigurăm că ascultarea este dezactivată
+        isListening = false  // Ensure that listening is disabled
 
-        // Ștergem eventualele mesaje de eroare afișate
+        // Clear any displayed error messages
         runOnUiThread {
-            intentTextView.text = ""  // Curățăm textul de pe ecran
+            intentTextView.text = ""  // Clear the text from the screen
         }
 
         textToSpeech?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
@@ -227,7 +225,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             override fun onDone(utteranceId: String?) {
                 runOnUiThread {
-                    // Resetăm aplicația la starea inițială
+                    // Reset the application to its initial state
                     val intent = Intent(this@MainActivity, MainActivity::class.java)
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
                     startActivity(intent)
@@ -238,7 +236,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             override fun onError(utteranceId: String?) {}
         })
 
-        // Redăm mesajul vocal
+        // Play the voice message
         textToSpeech?.speak(message, TextToSpeech.QUEUE_FLUSH, null, "reset_message")
     }
 
@@ -299,8 +297,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun stopTTS() {
         if (textToSpeech?.isSpeaking == true) {
-            textToSpeech?.stop()  // Oprire instantanee a TTS
-            textToSpeech?.shutdown()  // Eliberează resursele
+            textToSpeech?.stop()
+            textToSpeech?.shutdown()  // Release the resources
             textToSpeech = null
         }
     }

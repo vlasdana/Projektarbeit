@@ -21,19 +21,19 @@ import android.util.Log
 
 class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
-    // Gestionare coroutines
+    // Declare coroutines
     private val coroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    // Variabile pentru TTS și SpeechRecognizer
+    // Variabiles for TTS and SpeechRecognizer
     private lateinit var textToSpeech: TextToSpeech
     private lateinit var speechRecognizer: SpeechRecognizer
     private var playButton: Button? = null
     private var playText: TextView? = null
     private var backButton: Button? = null
     private var backText: TextView? = null
-    private var isListening = false  // Indicator pentru ascultare activă
+    private var isListening = false  // Indicator for active listening
 
-    // Variabilă pentru urmărirea navigării din LevelsActivity
+    //Variable for tracking navigation from LevelsActivity
     private var navigateFromLevelActivity = false
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -256,21 +256,21 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun pauseAllProcesses() {
-        // Punem pe pauză TTS dacă vorbește
+
         if (textToSpeech.isSpeaking) {
-            textToSpeech.stop() // Oprește doar vorbirea activă, fără să distrugă instanța
+            textToSpeech.stop() // Stop only the active speech without destroying the instance
         }
-        // Suspendăm recunoașterea vocală
+        // Suspend voice recognition
         if (isListening) {
             speechRecognizer.stopListening()
-            isListening = false // Marcam ascultarea ca inactivă
+            isListening = false // Mark listening as inactive
         }
     }
 
    override fun onResume() {
         super.onResume()
 
-        // Reactivăm componentele fără a le recrea
+        // Reactivate components without recreating them
         if (!::textToSpeech.isInitialized) {
             textToSpeech = TextToSpeech(this, this)
         }
@@ -280,12 +280,12 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             initSpeechRecognizer()
         }
 
-        // Resetăm UI-ul
+        // Reset UI
         updateTextColor(playText, R.color.black)
         updateTextColor(backText, R.color.black)
 
        if (navigateFromLevelActivity) {
-           navigateFromLevelActivity = false // Resetăm indicatorul
+           navigateFromLevelActivity = false // Reset indicator
            startInitialMessages()
        } else if (!isListening && !textToSpeech.isSpeaking) {
            startInitialMessages()

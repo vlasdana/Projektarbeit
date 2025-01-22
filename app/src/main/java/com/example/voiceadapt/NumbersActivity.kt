@@ -62,11 +62,11 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             stopSpeechRecognizer()
 
             if (isGameCompleted) {
-                // Dacă jocul este complet, resetează nivelul
+                // If the game is complete, reset the level
                 resetGameAndStart()
-                isGameCompleted = false // Resetează starea jocului
+                isGameCompleted = false // Reset the game state
             } else {
-                // Dacă jocul nu este complet, pornește normal prezentarea
+                // If the game is not complete, start the presentation normally
                 coroutineScope.launch {
                     presentNumber()
                 }
@@ -94,7 +94,7 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun stopSpeechRecognizer() {
         if (isListening) {
-            speechRecognizer.stopListening() // Oprește ascultarea
+            speechRecognizer.stopListening()
             isListening = false
         }
     }
@@ -198,25 +198,25 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 val spokenText = matches?.get(0)?.lowercase(Locale.GERMAN) ?: ""
 
                 when {
-                    //  Start joc (la început sau după reluare)
+                    //  Start game (at the beginning or after resuming)
                     spokenText in listOf("play", "spiel", "spielen", "start", "nochmal", "wiederholen") -> {
                         showToastMessage("Spiel startet!")
-                        resetGameAndStart()  //  Reset complet și pornire joc
+                        resetGameAndStart()  //  reset and start game
                     }
 
-                    //  Revenire la meniul principal
+                    // Return to the main menu
                     spokenText in listOf("zurück", "zurueck", "back") -> {
                         showToastMessage("Zurück zum Menü!")
                         navigateBack()
                     }
 
-                    //  Verificare culoare corectă
+                    //  Check correct color
                     isNumberMatch(spokenText, numberList[currentNumberIndex]) -> {
                         showToastMessage("Gut gemacht!")
                         nextNumber()
                     }
 
-                    //  Feedback pentru răspuns greșit
+                    //  Feedback for wrong answer
                     else -> {
                         showToastMessage("Das war nicht korrekt. Versuche es nochmal.")
                         startListeningForNumber(numberList[currentNumberIndex])
@@ -228,7 +228,7 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun resetGameAndStart() {
-        isGameCompleted = false // Resetăm starea jocului
+        isGameCompleted = false // Reset game state
         stopTTS()
 
         currentNumberIndex = 0
@@ -271,7 +271,7 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun nextNumber() {
 
         if (isGameCompleted) {
-            // Oprire TTS și reluare joc dacă butonul Play a fost apăsat
+            // Stop TTS and replay game if the Play button was pressed
             stopTTS()
             resetGameAndStart()
             return
@@ -287,7 +287,7 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 presentNumber()
             }
         } else {
-            isGameCompleted = true // Marcam jocul ca finalizat
+            isGameCompleted = true // Mark the game as completed
             coroutineScope.launch {
                 delay(1500)
                 if (!isGameCompleted) return@launch
@@ -299,7 +299,7 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun askToReplayOrGoBack() {
-        if (!isGameCompleted) return // Dacă jocul nu e complet, nu afișăm mesajul
+        if (!isGameCompleted) return // If the game is not complete, do not display the message
 
         textToSpeech.speak(
             "Möchtest du dieses Spiel erneut spielen? Sag 'Play' zum Wiederholen oder 'Zurück' zum Menü.",
@@ -315,17 +315,17 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 runOnUiThread {
                     when (utteranceId) {
                         "replay_prompt" -> {
-                            // Ascultăm comenzile Play sau Zurück după mesajul de reluare
+                            //  Listen for Play or Zurück commands after the resume message
                             if (isGameCompleted) {
                                 startListeningForReplayOrBack()
                             }
                         }
                         "intro_message" -> {
-                            // La început, ascultăm comenzile de start
+                            // At the beginning, listen for start commands
                             startListeningForStartCommand()
                         }
                         else -> {
-                            // Gestionăm alte mesaje (cum ar fi cele pentru numere)
+                            // Handle other messages (such as those for numbers)
                             if (utteranceId?.startsWith("number_instruction_") == true) {
                                 val number = utteranceId.removePrefix("number_instruction_")
                                 startListeningForNumber(number)
