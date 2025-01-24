@@ -146,7 +146,6 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun startListening() {
-        Log.d("SpeechRecognizer", "Zuhören startet...")
 
         // Stop TTS if active
         stopTTS()
@@ -198,7 +197,7 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 val command = matches?.get(0)?.lowercase(Locale.GERMAN) ?: ""
 
                 when {
-                    command.contains("play") || command.contains("pley") -> {navigateFromLevelActivity = true
+                    command.contains("play") || command.contains("pley") || command.contains("blay") -> {navigateFromLevelActivity = true
                     goToLevelsActivity()}
                     command.contains("zurück") || command.contains("zuruck") -> navigateBack()
                     else -> startListening()
