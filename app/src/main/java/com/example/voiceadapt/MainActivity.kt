@@ -39,7 +39,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var textToSpeech: TextToSpeech? = null
     private lateinit var intentTextView: TextView
     private lateinit var languageTextView: TextView
-    private lateinit var errorGuideline: Guideline
     private lateinit var recordButton: ToggleButton
     private var isListening = false  // this is for checking if we are listening
     private val handler = Handler(Looper.getMainLooper()) // for pausing
@@ -63,7 +62,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // initialise the UI
         window.decorView.setBackgroundColor(ContextCompat.getColor(this, R.color.background_first_screen))
         intentTextView = findViewById(R.id.intentView)
-        errorGuideline = findViewById(R.id.errorGuideLine)
         recordButton = findViewById(R.id.startButton)
         languageTextView = findViewById(R.id.language_text_view)
         recordButton.visibility = Button.INVISIBLE
