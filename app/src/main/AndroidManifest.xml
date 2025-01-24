@@ -30,10 +30,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".SecondActivity" />
+
         <activity
             android:name=".LanguageActivity"
-            android:theme="@style/Theme.AppCompat.Dialog"></activity>
+            android:theme="@style/Theme.AppCompat.Dialog"
+            ></activity>
         <activity
             android:name=".ChoiceActivity"
             android:exported="false" />
