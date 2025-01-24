@@ -91,28 +91,26 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             override fun onBufferReceived(buffer: ByteArray?) {}
             override fun onEndOfSpeech() {}
             override fun onError(error: Int) {
+                isListening = false
+
                 val errorMessage = when (error) {
                     SpeechRecognizer.ERROR_AUDIO -> "Audio Fehler: Probleme bei der Audioaufnahme."
                     SpeechRecognizer.ERROR_NO_MATCH -> {
                         intentTextView.text = "Keine gültige Eingabe erkannt. Bitte nochmal versuchen!"
-                        isListening = false
                         restartListeningAfterDelay()
                         return
                     }
                     SpeechRecognizer.ERROR_NETWORK -> "Netzwerk Fehler: Überprüfen Sie die Internetverbindung."
                     SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> {
                         intentTextView.text = "Sag etwas bitte!"
-                        isListening = false
                         restartListeningAfterDelay()
                         return
                     }
                     SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> {
-                        isListening = false
                         restartListeningAfterDelay()
                         return
                     }
                     SpeechRecognizer.ERROR_CLIENT -> {
-                        isListening = false
                         restartListeningAfterDelay()
                         return
                     }
@@ -123,8 +121,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 runOnUiThread {
                     intentTextView.text = "Fehler: $errorMessage"
                 }
-                isListening = false
-                restartListeningAfterDelay()
+
             }
 
             override fun onResults(results: Bundle?) {
@@ -177,7 +174,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun startListening() {
         if (isListening || speechRecognizer == null || textToSpeech?.isSpeaking == true) {
-            return // Prevenim suprapunerea instanțelor
+            return
         }
 
         isListening = true
@@ -199,10 +196,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun restartListeningAfterDelay() {
         coroutineScope.launch {
             delay(3000) // 3 seconds pause before start listening again
-            // Wait until TTS is finished
-            while (textToSpeech?.isSpeaking == true) {
-                delay(500)
-            }
             startListening()
         }
     }
@@ -248,11 +241,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
 
-
     private fun speakAndReset(message: String) {
         // Complete shutdown of the SpeechRecognizer to avoid errors
         stopListening()
-        speechRecognizer?.cancel()
         speechRecognizer?.destroy()
         isListening = false  // Ensure that listening is disabled
 
@@ -276,7 +267,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             override fun onError(utteranceId: String?) {}
         })
-
         // Play the voice message
         textToSpeech?.speak(message, TextToSpeech.QUEUE_FLUSH, null, "reset_message")
     }
@@ -340,14 +330,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun speakAfterTTSReady() {
-        if (isTTSReady) {
-            speak("Hey, ich bin Lingo, magst du mit mir spielen?")
-            handler.postDelayed({ startListening() }, 3000)
-        } else {
-            intentTextView.text = "TTS is not ready. Please wait."
+        coroutineScope.launch {
+                speak("Hey, ich bin Lingo, magst du mit mir spielen?")
+                delay(3000)
+                startListening()
         }
     }
-
 
     private fun stopTTS() {
         if (textToSpeech?.isSpeaking == true) {
