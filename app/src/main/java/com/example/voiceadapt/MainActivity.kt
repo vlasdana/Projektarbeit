@@ -18,6 +18,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.util.Log
 import android.widget.ToggleButton
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.constraintlayout.widget.Guideline
@@ -34,27 +35,27 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-
-    private var ttsCallback: (() -> Unit)? = null
     private var speechRecognizer: SpeechRecognizer? = null
     private var textToSpeech: TextToSpeech? = null
     private lateinit var intentTextView: TextView
     private lateinit var languageTextView: TextView
-    private lateinit var errorTextView: TextView
     private lateinit var errorGuideline: Guideline
     private lateinit var recordButton: ToggleButton
     private var isListening = false  // this is for checking if we are listening
     private val handler = Handler(Looper.getMainLooper()) // for pausing
+    private var isTTSReady = false  // Flag to track TTS readiness
 
     private val languageResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val selectedLanguage = result.data?.getStringExtra("selected_language")
             languageTextView.text = "Selected language: $selectedLanguage"
-            speak("Hey,ich bin Lingo, magst du mit mir spielen?")
-            // introduce a delay of a few seconds to avoid collisions between TTS and user speech
-            handler.postDelayed({ startListening() }, 3000)
+
+            //Initialise TTS after Language Selection
+            initializeTTS()
         }
     }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -62,7 +63,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // initialise the UI
         window.decorView.setBackgroundColor(ContextCompat.getColor(this, R.color.background_first_screen))
         intentTextView = findViewById(R.id.intentView)
-        errorTextView = findViewById(R.id.errorView)
         errorGuideline = findViewById(R.id.errorGuideLine)
         recordButton = findViewById(R.id.startButton)
         languageTextView = findViewById(R.id.language_text_view)
@@ -87,32 +87,51 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 intentTextView.text = "Bereit zum Hören"
             }
             override fun onBeginningOfSpeech() {
-                intentTextView.text = "🔴🟠🟡🟢 Höre zu..."
+                intentTextView.text = "\uD83E\uDDFF\uD83D\uDC40\uD83E\uDDFF Höre zu..."
             }
             override fun onRmsChanged(rmsdB: Float) {}
             override fun onBufferReceived(buffer: ByteArray?) {}
-            override fun onEndOfSpeech() {
-                intentTextView.text = "🧿👀🧿Zuhören beendet"
-            }
+            override fun onEndOfSpeech() {}
             override fun onError(error: Int) {
-                val errorMessage = getErrorDescription(error)
-                intentTextView.text = "Fehler: $errorMessage}"
-                // we stop the listening on frequent errors to avoid loops
-                if(error == SpeechRecognizer.ERROR_NO_MATCH ) {
-                    stopListening()
-                    intentTextView.text = "Keine gültige Eingabe erkannt. Bitte nochmal versuchen!"
-                } else if(error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT){
-                    intentTextView.text = "Sag etwas bitte!"
-                    handler.postDelayed({startListening()}, 3000)
-                }else if (isListening) {
-                    handler.postDelayed({startListening()}, 3000)
+                val errorMessage = when (error) {
+                    SpeechRecognizer.ERROR_AUDIO -> "Audio Fehler: Probleme bei der Audioaufnahme."
+                    SpeechRecognizer.ERROR_NO_MATCH -> {
+                        intentTextView.text = "Keine gültige Eingabe erkannt. Bitte nochmal versuchen!"
+                        isListening = false
+                        restartListeningAfterDelay()
+                        return
+                    }
+                    SpeechRecognizer.ERROR_NETWORK -> "Netzwerk Fehler: Überprüfen Sie die Internetverbindung."
+                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> {
+                        intentTextView.text = "Sag etwas bitte!"
+                        isListening = false
+                        restartListeningAfterDelay()
+                        return
+                    }
+                    SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> {
+                        isListening = false
+                        restartListeningAfterDelay()
+                        return
+                    }
+                    SpeechRecognizer.ERROR_CLIENT -> {
+                        isListening = false
+                        restartListeningAfterDelay()
+                        return
+                    }
+                    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Berechtigungsfehler: Mikrofonzugriff verweigert."
+                    else -> "Unbekantes Fehler"
                 }
+
+                runOnUiThread {
+                    intentTextView.text = "Fehler: $errorMessage"
+                }
+                isListening = false
+                restartListeningAfterDelay()
             }
+
             override fun onResults(results: Bundle?) {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val spokenText = matches?.get(0) ?: "Nicht erkannt"
-                intentTextView.text = "Du hast gesagt: $spokenText"
-
                 // answers processing
                 processSpeechResponse(spokenText)
 
@@ -137,12 +156,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         textToSpeech = TextToSpeech(this, { status ->
             if(status == TextToSpeech.SUCCESS){
                 textToSpeech?.setOnUtteranceProgressListener(object: UtteranceProgressListener(){
-                    override fun onDone(utteranceId: String?) {
-                        handler.post{
-                            ttsCallback?.invoke()
-                            ttsCallback = null
-                        }
-                    }
+                    override fun onDone(utteranceId: String?) {}
                     override fun onStart(utteranceId: String?) {}
                     override fun onError(utteranceId: String?) {}
                 })
@@ -151,62 +165,91 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         })
     }
 
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            textToSpeech?.language = Locale("de", "DE")
+            textToSpeech?.setSpeechRate(1.5f)
+            isTTSReady = true // Mark TTS as ready
+        } else {
+            isTTSReady = false
+            intentTextView.text = "TTS initialization failed."
+        }
+    }
+
 
     private fun startListening() {
-        stopListening()
-        if(isListening) return
+        if (isListening || speechRecognizer == null || textToSpeech?.isSpeaking == true) {
+            return // Prevenim suprapunerea instanțelor
+        }
 
         isListening = true
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "de-DE") // Set german language
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "de-DE") // Setăm limba germană
             putExtra(RecognizerIntent.EXTRA_PROMPT, "Jetzt bitte sprechen...")
         }
-        handler.post{
+
+        try {
             speechRecognizer?.startListening(intent)
+        } catch (e: Exception) {
+            intentTextView.text = "Fehler: Starten von Sprachbefehl fehlgeschlagen."
+            e.printStackTrace()
+            isListening = false
         }
     }
 
+    private fun restartListeningAfterDelay() {
+        coroutineScope.launch {
+            delay(3000) // 3 seconds pause before start listening again
+            // Wait until TTS is finished
+            while (textToSpeech?.isSpeaking == true) {
+                delay(500)
+            }
+            startListening()
+        }
+    }
+
+
     private fun processSpeechResponse(spokenText: String) {
-        val response = when {
-            // If user says "nein" or "nö"
+        when {
             spokenText.contains("nein", ignoreCase = true) || spokenText.contains("nö", ignoreCase = true) -> {
                 stopListening()
                 speakAndReset("Ohhh, Schade! Tschüss!")  // Replay the message and reset the application.
                 return
             }
 
-            // If user says "spielen" sau "ja"
             spokenText.contains("spielen", ignoreCase = true)
                     || spokenText.contains("ich möchte spielen", ignoreCase = true)
                     || spokenText.contains("ja", ignoreCase = true) -> {
                 stopListening()
+
+                runOnUiThread { intentTextView.text = "" } // Clear the error message before transitioning
+
                 speak("Super! Spielen wir!")
-                try {
-                    speechRecognizer?.destroy()
-                    val intent = Intent(this, ChoiceActivity::class.java)
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    e.printStackTrace()
+
+                coroutineScope.launch {
+                    delay(500) // Allow the SpeechRecognizer to cleanly stop
+                    try {
+                        speechRecognizer?.destroy()
+                        val intent = Intent(this@MainActivity, ChoiceActivity::class.java)
+                        startActivity(intent)
+                        finish()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
                 return
             }
 
             else -> {
                 speak("Bitte sag Ja oder Nein.")
-                isListening = true
-                return
+                isListening = false
+                restartListeningAfterDelay()
             }
         }
-
-        // Display the response on the screen
-        intentTextView.text = response
-
-        // Restart listening if necessary.
-        if (isListening) {
-            handler.postDelayed({ startListening() }, 3000)
-        }
     }
+
+
 
     private fun speakAndReset(message: String) {
         // Complete shutdown of the SpeechRecognizer to avoid errors
@@ -257,6 +300,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         coroutineScope.cancel()
         speechRecognizer?.destroy()
         textToSpeech?.shutdown()
+        isTTSReady = false
 
     }
 
@@ -271,43 +315,62 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 1)
     }
 
-    private fun getErrorDescription(error: Int): String {
-        return when (error) {
-            SpeechRecognizer.ERROR_AUDIO -> "Audio Fehler"
-            SpeechRecognizer.ERROR_NO_MATCH -> "Kein Ereignis"
-            SpeechRecognizer.ERROR_NETWORK -> "Netzwerk Fehler"
-            SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Zeit überschritten"
-            else -> "Unbekannte Fehler!"
+    private fun stopListening() {
+        try {
+            speechRecognizer?.stopListening()
+            speechRecognizer?.cancel()
+            isListening = false
+            Log.d("SpeechRecognizer", "Listening stopped and resources released.")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("SpeechRecognizer", "Error while stopping SpeechRecognizer: ${e.message}")
         }
     }
-    private fun stopListening() {
-        speechRecognizer?.stopListening()
-        isListening = false
-        intentTextView.text = "Zuhören ist beendet."
+
+    private fun initializeTTS() {
+        textToSpeech = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                textToSpeech?.language = Locale("de", "DE")
+                textToSpeech?.setSpeechRate(1.5f)
+                isTTSReady = true // Marchez TTS ca fiind inițializat
+                speakAfterTTSReady() // Continuă cu mesajele vocale
+            } else {
+                isTTSReady = false
+                intentTextView.text = "TTS initialization failed."
+            }
+        }
     }
+
+    private fun speakAfterTTSReady() {
+        if (isTTSReady) {
+            speak("Hey, ich bin Lingo, magst du mit mir spielen?")
+            handler.postDelayed({ startListening() }, 3000)
+        } else {
+            intentTextView.text = "TTS is not ready. Please wait."
+        }
+    }
+
 
     private fun stopTTS() {
         if (textToSpeech?.isSpeaking == true) {
             textToSpeech?.stop()
-            textToSpeech?.shutdown()  // Release the resources
-            textToSpeech = null
         }
     }
 
     private fun speak(text: String) {
         coroutineScope.launch {
+            if (!isTTSReady) {
+                intentTextView.text = "TTS is not ready. Please wait."
+                return@launch
+            }
+
             textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
             delay(100)
-            while(textToSpeech?.isSpeaking == true){
+            while (textToSpeech?.isSpeaking == true) {
                 delay(1000)
             }
         }
     }
 
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            textToSpeech?.language = Locale("de", "DE")
-            textToSpeech?.setSpeechRate(1.5f)
-        }
-    }
+
 }
