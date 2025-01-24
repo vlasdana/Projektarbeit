@@ -215,6 +215,10 @@ override fun onDestroy() {
 
 **Expanded Levels:** Add more levels with varied themes (e.g., shapes, animals, and objects).
 
+**New Features:** Implement new functions, such as the ability to resume the game from a specific point.
+
+**Avatar Animation:** Introduce animations for the avatar to make interactions more engaging and dynamic.
+
 **Enhanced Feedback:** Integrate dynamic voice customization for user-specific preferences.
 
 **Offline Support:** Use technologies like Vosk or Picovoice for offline voice recognition.
