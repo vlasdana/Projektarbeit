@@ -98,7 +98,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             textToSpeech.language = Locale.GERMAN
-            textToSpeech.setSpeechRate(1.5f)
+            textToSpeech.setSpeechRate(2f)
             // Set listener for TTS
             textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {}
@@ -136,7 +136,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val color = colorList[currentColorIndex]
         showColorDot(color)
         speakInGerman("Das ist die Farbe ${getGermanColor(color)}.")
-        delay(1400)
+        delay(1200)
         speakInEnglish("This is $color. Now repeat after me: $color.", "color_instruction_$color")
 
     }
@@ -180,14 +180,19 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 showToastMessage("Fehler: Bitte versuche es erneut.")
                 coroutineScope.launch {
                     delay(1000)
-                    if (isListening) startListeningForColor(colorList[currentColorIndex])
+                        if(isGameCompleted){
+                            askToReplayOrGoBack()
+                        }else{
+                            startListeningForColor(colorList[currentColorIndex])
+                        }
                 }
             }
 
-
             override fun onResults(results: Bundle?) {
+                isListening = false
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val spokenText = matches?.get(0)?.lowercase(Locale.GERMAN) ?: ""
+                val spokenTextEN = matches?.get(0)?.lowercase(Locale.ENGLISH) ?: ""
 
                 when {
                     //  Start game (at the beginning or after resuming)
@@ -211,7 +216,14 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     //  Feedback for wrong answer
                     else -> {
                         showToastMessage("Das war nicht korrekt. Versuche es nochmal.")
-                        startListeningForColor(colorList[currentColorIndex])
+                        coroutineScope.launch{
+                            delay(2000)
+                            if(!isListening){
+                                showToastMessage("Versuche es erneut!")
+                                startListeningForColor(colorList[currentColorIndex])
+                            }
+                        }
+
                     }
                 }
             }
@@ -257,8 +269,9 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         )
 
         // Check if the spoken text is a variation of the color
+        val normalizedText = spokenText.trim().lowercase(Locale.ENGLISH)
         return colorVariations[expectedColor]?.any { variation ->
-            spokenText.contains(variation)
+            normalizedText.contains(variation)
         } ?: false
     }
 
@@ -270,7 +283,6 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             resetGameAndStart()
             return
         }
-
         currentColorIndex++
 
         // Update progress
