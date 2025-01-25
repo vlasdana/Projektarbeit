@@ -188,13 +188,11 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 showToastMessage("Fehler: Bitte versuche es erneut.")
                 coroutineScope.launch {
                     delay(1000)
-                    if (isListening){
                         if(isGameCompleted){
                             askToReplayOrGoBack()
                         }else{
                             startListeningForNumber(numberList[currentNumberIndex])
                         }
-                    }
                 }
             }
 
@@ -205,7 +203,7 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 val spokenTextEN = matches?.get(0)?.lowercase(Locale.ENGLISH) ?: ""
 
                 when {
-                    //  Start game (at the beginning or after resuming) //checkbug
+                    //  Start game (at the beginning or after resuming)
                     spokenText in listOf("play", "spiel", "spielen", "start", "nochmal", "wiederholen") -> {
                         showToastMessage("Spiel startet!")
                         resetGameAndStart()  //  reset and start game
@@ -228,10 +226,7 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         showToastMessage("Das war nicht korrekt. Versuche es nochmal.")
                         coroutineScope.launch {
                             delay(2000)
-                            if(!isListening && isGameCompleted){
-                               showToastMessage("Sag bitte etwas")
-                                askToReplayOrGoBack()
-                            }else if(!isListening) {
+                            if(!isListening){
                                 showToastMessage("Versuche es erneut!")
                                 startListeningForNumber(numberList[currentNumberIndex]) // Relaunch listening()
                             }
@@ -299,6 +294,9 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         progressPercentage = ((currentNumberIndex.toFloat() / numberList.size) * 100).toInt()
         progressBar.progress = progressPercentage
+
+        // Mutăm vulpea
+        moveFoxToNextNumber()
 
         if (currentNumberIndex < numberList.size) {
             coroutineScope.launch {
@@ -449,12 +447,81 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-
     override fun onDestroy() {
         stopTTS()
         speechRecognizer.cancel()
         speechRecognizer.destroy()
         coroutineScope.cancel()
         super.onDestroy()
+    }
+
+    private fun moveFoxToNextNumber() {
+        // Ascunde vulpea la început
+        val fuxiePlay = findViewById<ImageView>(R.id.fuxiePlay)
+        fuxiePlay.visibility = ImageView.VISIBLE
+
+        // Poziționăm vulpea în funcție de numărul curent
+        when (currentNumberIndex) {
+            0 -> {
+                // Vulpea lângă numărul 0
+                val location = IntArray(2)
+                nrZero.getLocationOnScreen(location)
+                val x = location[0]
+                val y = location[1]
+
+                fuxiePlay.x = x.toFloat() + nrZero.width / 2 - fuxiePlay.width / 2
+                fuxiePlay.y = y.toFloat() + nrZero.height
+            }
+            1 -> {
+                // Vulpea lângă numărul 1
+                fuxiePlay.x = nrOne.x + nrOne.width / 2
+                fuxiePlay.y = nrOne.y + nrOne.height / 2
+            }
+            2 -> {
+                // Vulpea lângă numărul 2
+                fuxiePlay.x = nrTwo.x + nrTwo.width / 2
+                fuxiePlay.y = nrTwo.y + nrTwo.height / 2
+            }
+            3 -> {
+                // Vulpea lângă numărul 3
+                fuxiePlay.x = nrThree.x + nrThree.width / 2
+                fuxiePlay.y = nrThree.y + nrThree.height / 2
+            }
+            4 -> {
+                // Vulpea lângă numărul 4
+                fuxiePlay.x = nrFour.x + nrFour.width / 2
+                fuxiePlay.y = nrFour.y + nrFour.height / 2
+            }
+            5 -> {
+                // Vulpea lângă numărul 5
+                fuxiePlay.x = nrFive.x + nrFive.width / 2
+                fuxiePlay.y = nrFive.y + nrFive.height / 2
+            }
+            6 -> {
+                // Vulpea lângă numărul 6
+                fuxiePlay.x = nrSix.x + nrSix.width / 2
+                fuxiePlay.y = nrSix.y + nrSix.height / 2
+            }
+            7 -> {
+                // Vulpea lângă numărul 7
+                fuxiePlay.x = nrSeven.x + nrSeven.width / 2
+                fuxiePlay.y = nrSeven.y + nrSeven.height / 2
+            }
+            8 -> {
+                // Vulpea lângă numărul 8
+                fuxiePlay.x = nrEight.x + nrEight.width / 2
+                fuxiePlay.y = nrEight.y + nrEight.height / 2
+            }
+            9 -> {
+                // Vulpea lângă numărul 9
+                fuxiePlay.x = nrNine.x + nrNine.width / 2
+                fuxiePlay.y = nrNine.y + nrNine.height / 2
+            }
+            10 -> {
+                // Vulpea lângă numărul 10
+                fuxiePlay.x = nrTen.x + nrTen.width / 2
+                fuxiePlay.y = nrTen.y + nrTen.height / 2
+            }
+        }
     }
 }
