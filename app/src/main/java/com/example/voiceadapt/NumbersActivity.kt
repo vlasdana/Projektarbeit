@@ -100,7 +100,7 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             textToSpeech.language = Locale.GERMAN
-            textToSpeech.setSpeechRate(1.5f)
+            textToSpeech.setSpeechRate(2f)
 
             textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {}
@@ -166,9 +166,10 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.ENGLISH)
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS,true)
             putExtra(RecognizerIntent.EXTRA_PROMPT, "Please repeat the number: $expectedNumber")
-        }
 
+        }
         isListening = true
         speechRecognizer.startListening(intent)
     }
@@ -187,16 +188,24 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 showToastMessage("Fehler: Bitte versuche es erneut.")
                 coroutineScope.launch {
                     delay(1000)
-                    if (isListening) startListeningForNumber(numberList[currentNumberIndex])
+                    if (isListening){
+                        if(isGameCompleted){
+                            askToReplayOrGoBack()
+                        }else{
+                            startListeningForNumber(numberList[currentNumberIndex])
+                        }
+                    }
                 }
             }
 
             override fun onResults(results: Bundle?) {
+                isListening = false
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 val spokenText = matches?.get(0)?.lowercase(Locale.GERMAN) ?: ""
+                val spokenTextEN = matches?.get(0)?.lowercase(Locale.ENGLISH) ?: ""
 
                 when {
-                    //  Start game (at the beginning or after resuming)
+                    //  Start game (at the beginning or after resuming) //checkbug
                     spokenText in listOf("play", "spiel", "spielen", "start", "nochmal", "wiederholen") -> {
                         showToastMessage("Spiel startet!")
                         resetGameAndStart()  //  reset and start game
@@ -208,8 +217,8 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         navigateBack()
                     }
 
-                    //  Check correct color
-                    isNumberMatch(spokenText, numberList[currentNumberIndex]) -> {
+                    //  Check correct number
+                    isNumberMatch(spokenTextEN, numberList[currentNumberIndex]) -> {
                         showToastMessage("Gut gemacht!")
                         nextNumber()
                     }
@@ -217,7 +226,17 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     //  Feedback for wrong answer
                     else -> {
                         showToastMessage("Das war nicht korrekt. Versuche es nochmal.")
-                        startListeningForNumber(numberList[currentNumberIndex])
+                        coroutineScope.launch {
+                            delay(2000)
+                            if(!isListening && isGameCompleted){
+                               showToastMessage("Sag bitte etwas")
+                                askToReplayOrGoBack()
+                            }else if(!isListening) {
+                                showToastMessage("Versuche es erneut!")
+                                startListeningForNumber(numberList[currentNumberIndex]) // Relaunch listening()
+                            }
+                        }
+
                     }
                 }
             }
@@ -261,8 +280,10 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             "nine" to listOf("nein","nine", "nain", "nin","ain"),
             "ten" to listOf("den","ten", "tenn", "tn","denn","then")
         )
+        // Normalizează textul input
+        val normalizedText = spokenText.trim().lowercase(Locale.ENGLISH)
         return numberVariations[expectedNumber]?.any { variation ->
-            spokenText.contains(variation)
+            normalizedText.contains(variation)
         } ?: false
     }
 
