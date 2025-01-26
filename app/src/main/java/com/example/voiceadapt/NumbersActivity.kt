@@ -1,5 +1,7 @@
 package com.example.voiceadapt
 
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -456,71 +458,39 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun moveFoxToNextNumber() {
-        // Ascunde vulpea la început
         val fuxiePlay = findViewById<ImageView>(R.id.fuxiePlay)
         fuxiePlay.visibility = ImageView.VISIBLE
 
-        // Poziționăm vulpea în funcție de numărul curent
-        when (currentNumberIndex) {
-            0 -> {
-                // Vulpea lângă numărul 0
-                val location = IntArray(2)
-                nrZero.getLocationOnScreen(location)
-                val x = location[0]
-                val y = location[1]
 
-                fuxiePlay.x = x.toFloat() + nrZero.width / 2 - fuxiePlay.width / 2
-                fuxiePlay.y = y.toFloat() + nrZero.height
-            }
-            1 -> {
-                // Vulpea lângă numărul 1
-                fuxiePlay.x = nrOne.x + nrOne.width / 2
-                fuxiePlay.y = nrOne.y + nrOne.height / 2
-            }
-            2 -> {
-                // Vulpea lângă numărul 2
-                fuxiePlay.x = nrTwo.x + nrTwo.width / 2
-                fuxiePlay.y = nrTwo.y + nrTwo.height / 2
-            }
-            3 -> {
-                // Vulpea lângă numărul 3
-                fuxiePlay.x = nrThree.x + nrThree.width / 2
-                fuxiePlay.y = nrThree.y + nrThree.height / 2
-            }
-            4 -> {
-                // Vulpea lângă numărul 4
-                fuxiePlay.x = nrFour.x + nrFour.width / 2
-                fuxiePlay.y = nrFour.y + nrFour.height / 2
-            }
-            5 -> {
-                // Vulpea lângă numărul 5
-                fuxiePlay.x = nrFive.x + nrFive.width / 2
-                fuxiePlay.y = nrFive.y + nrFive.height / 2
-            }
-            6 -> {
-                // Vulpea lângă numărul 6
-                fuxiePlay.x = nrSix.x + nrSix.width / 2
-                fuxiePlay.y = nrSix.y + nrSix.height / 2
-            }
-            7 -> {
-                // Vulpea lângă numărul 7
-                fuxiePlay.x = nrSeven.x + nrSeven.width / 2
-                fuxiePlay.y = nrSeven.y + nrSeven.height / 2
-            }
-            8 -> {
-                // Vulpea lângă numărul 8
-                fuxiePlay.x = nrEight.x + nrEight.width / 2
-                fuxiePlay.y = nrEight.y + nrEight.height / 2
-            }
-            9 -> {
-                // Vulpea lângă numărul 9
-                fuxiePlay.x = nrNine.x + nrNine.width / 2
-                fuxiePlay.y = nrNine.y + nrNine.height / 2
-            }
-            10 -> {
-                // Vulpea lângă numărul 10
-                fuxiePlay.x = nrTen.x + nrTen.width / 2
-                fuxiePlay.y = nrTen.y + nrTen.height / 2
+        val targetView = when (currentNumberIndex) {
+            0 -> nrZero
+            1 -> nrOne
+            2 -> nrTwo
+            3 -> nrThree
+            4 -> nrFour
+            5 -> nrFive
+            6 -> nrSix
+            7 -> nrSeven
+            8 -> nrEight
+            9 -> nrNine
+            10 -> findViewById(R.id.forestImage) //or nrTen ??
+            else -> null
+        }
+
+        targetView?.let { view ->
+            val location = IntArray(2)
+            view.getLocationOnScreen(location)
+
+            val targetX = location[0].toFloat() + view.width / 2 - fuxiePlay.width / 2
+            val targetY = location[1].toFloat() - view.width * 2 - view.width / 2
+
+            val animatorX = ObjectAnimator.ofFloat(fuxiePlay, "x", fuxiePlay.x, targetX)
+            val animatorY = ObjectAnimator.ofFloat(fuxiePlay, "y", fuxiePlay.y, targetY)
+
+            AnimatorSet().apply {
+                playTogether(animatorX, animatorY)
+                duration = 500
+                start()
             }
         }
     }
