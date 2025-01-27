@@ -490,6 +490,13 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             // val targetY = (targetLocation[1] - parentLocation[1]).toFloat() + offsetInPx - fuxiePlay.width
             val targetY = (targetLocation[1] - parentLocation[1]).toFloat() + offsetInPx - fuxiePlay.width
 
+            // Check direction and rotate the fox
+            if (targetX < fuxiePlay.x) {
+                fuxiePlay.rotationY = 180f // Look to the left
+            } else {
+                fuxiePlay.rotationY = 0f // Look to the right
+            }
+
             val animatorX = ObjectAnimator.ofFloat(fuxiePlay, "x", fuxiePlay.x, targetX)
             val animatorY = ObjectAnimator.ofFloat(fuxiePlay, "y", fuxiePlay.y, targetY)
 
