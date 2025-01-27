@@ -484,7 +484,7 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             8 -> nrEight
             9 -> nrNine
             10 -> nrTen
-            11 -> findViewById(R.id.forestImage) //or nrTen ??
+            11 -> findViewById(R.id.forestImage)
             else -> null
         }
 
@@ -508,6 +508,12 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 fuxiePlay.y // Keep the fox at its current vertical position
             } else {
                 (targetLocation[1] - parentLocation[1]).toFloat() + offsetInPx - fuxiePlay.width
+            }
+            // Check direction and rotate the fox
+            if (targetX < fuxiePlay.x) {
+                fuxiePlay.rotationY = 180f // Look to the left
+            } else {
+                fuxiePlay.rotationY = 0f // Look to the right
             }
 
             val animatorX = ObjectAnimator.ofFloat(fuxiePlay, "x", fuxiePlay.x, targetX)
