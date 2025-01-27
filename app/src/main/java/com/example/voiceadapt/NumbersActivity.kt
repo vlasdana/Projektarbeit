@@ -1,5 +1,7 @@
 package com.example.voiceadapt
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.content.Intent
@@ -286,7 +288,7 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             "nine" to listOf("nein","nine", "nain", "nin","ain"),
             "ten" to listOf("den","ten", "tenn", "tn","denn","then")
         )
-        // Normalizează textul input
+        // Normalize input text
         val normalizedText = spokenText.trim().lowercase(Locale.ENGLISH)
         return numberVariations[expectedNumber]?.any { variation ->
             normalizedText.contains(variation)
@@ -306,7 +308,6 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         progressPercentage = ((currentNumberIndex.toFloat() / numberList.size) * 100).toInt()
         progressBar.progress = progressPercentage
 
-        // Mutăm vulpea
         moveFoxToNextNumber()
 
         if (currentNumberIndex < numberList.size) {
@@ -469,11 +470,6 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun moveFoxToNextNumber() {
         val fuxiePlay = findViewById<ImageView>(R.id.fuxiePlay)
 
-        // Verifică dacă a ajuns la cifra 10 (target final)
-        if (currentNumberIndex == 11) {
-            fuxiePlay.visibility = View.INVISIBLE // Ascunde avatarul
-            return // Iese din funcție
-        }
         fuxiePlay.visibility = ImageView.VISIBLE
 
         val targetView = when (currentNumberIndex) {
@@ -493,25 +489,26 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
         targetView?.let { view ->
-            //val location = IntArray(2)
-            //view.getLocationOnScreen(location)
             val parentLocation = IntArray(2)
             val targetLocation = IntArray(2)
 
             val offsetInDp = 40  // this value controls how much lower the fox moves
-            // Transformă offsetul din dp în px
+            // Transform offset from dp in px
             val offsetInPx = (offsetInDp * resources.displayMetrics.density).toInt()
 
-            // Obține locația părintelui și a targetului
+            // Obtain parent and target location
             (view.parent as View).getLocationOnScreen(parentLocation)
             view.getLocationOnScreen(targetLocation)
 
-            // Calculează coordonatele țintei relative la părinte
+            // Calculate relative coordinates to parent
             val targetX = (targetLocation[0] - parentLocation[0]).toFloat() + view.width / 2 - fuxiePlay.width / 2
-            val targetY = (targetLocation[1] - parentLocation[1]).toFloat() + offsetInPx - fuxiePlay.width
-           // val targetX = location[0].toFloat() + view.width / 2 - fuxiePlay.width / 2
-           // val targetY = location[1].toFloat() + offsetInPx
-           // val targetY = location[1].toFloat() - view.width * 2 - view.width / 2
+           // val targetY = (targetLocation[1] - parentLocation[1]).toFloat() + offsetInPx - fuxiePlay.width
+            val targetY = if (currentNumberIndex == 11) {
+                // For the forest, move horizontally while keeping the current y position
+                fuxiePlay.y // Keep the fox at its current vertical position
+            } else {
+                (targetLocation[1] - parentLocation[1]).toFloat() + offsetInPx - fuxiePlay.width
+            }
 
             val animatorX = ObjectAnimator.ofFloat(fuxiePlay, "x", fuxiePlay.x, targetX)
             val animatorY = ObjectAnimator.ofFloat(fuxiePlay, "y", fuxiePlay.y, targetY)
@@ -519,6 +516,18 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             AnimatorSet().apply {
                 playTogether(animatorX, animatorY)
                 duration = 500
+
+                // Add listener for fox to disappear
+                addListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        super.onAnimationEnd(animation)
+                        if (currentNumberIndex == 11) {
+                            //Fox becomes invisible after reaching the forest target
+                            fuxiePlay.visibility = View.INVISIBLE
+                        }
+                    }
+                })
+
                 start()
             }
         }
