@@ -35,25 +35,11 @@
         android:id="@+id/fuxiePlay"
         android:layout_width="130dp"
         android:layout_height="130dp"
-        android:layout_marginStart="40dp"
+        android:layout_marginStart="36dp"
         android:contentDescription="Fuxie Play"
         android:src="@drawable/fuxie_play"
-        app:layout_constraintTop_toBottomOf="@+id/playButton"
-        app:layout_constraintStart_toStartOf="parent"/>
-
-
-
-
-    <ImageView
-        android:id="@+id/firstArrowRight"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:contentDescription="Arrow Right Image"
-        android:layout_marginStart="45dp"
-        android:src="@drawable/arrow_right"
-        app:layout_constraintStart_toEndOf="@+id/fuxiePlay"
-        app:layout_constraintTop_toTopOf="@+id/nrZero"
-        app:layout_constraintBottom_toBottomOf="@+id/nrZero" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/playButton" />
 
     <ImageView
         android:id="@+id/nrZero"
@@ -63,111 +49,56 @@
         android:contentDescription="Number Zero"
         android:src="@drawable/zero"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginStart="56dp"
-        app:layout_constraintStart_toStartOf="@id/firstArrowRight"
+        android:layout_marginEnd="25dp"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageView
-        android:id="@+id/firstArrowDown"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginTop="10dp"
-        android:contentDescription="Arrow Down Image"
-        android:layout_marginEnd="46dp"
-        android:src="@drawable/arrow_down"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/nrZero" />
 
     <ImageView
         android:id="@+id/nrOne"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="60dp"
         android:contentDescription="Number One"
         android:layout_marginEnd="25dp"
         android:src="@drawable/one"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/firstArrowDown" />
+        app:layout_constraintTop_toBottomOf="@+id/nrZero" />
 
-    <ImageView
-        android:id="@+id/firstArrowLeft"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginTop="100dp"
-        android:contentDescription="Arrow Left Image"
-        android:src="@drawable/arrow_left"
-        app:layout_constraintEnd_toStartOf="@+id/nrOne"
-        app:layout_constraintTop_toBottomOf="@+id/firstArrowRight"
-        />
 
     <ImageView
         android:id="@+id/nrTwo"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:layout_marginTop="80dp"
-        android:layout_marginEnd="10dp"
+        android:layout_marginTop="60dp"
+        android:layout_marginEnd="60dp"
         android:contentDescription="Number Two"
         android:src="@drawable/two"
-        app:layout_constraintEnd_toStartOf="@+id/firstArrowLeft"
-        app:layout_constraintTop_toBottomOf="@+id/firstArrowRight" />
+        app:layout_constraintEnd_toStartOf="@+id/nrOne"
+        app:layout_constraintTop_toBottomOf="@+id/nrZero" />
 
-    <ImageView
-        android:id="@+id/secondArrowLeft"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginTop="100dp"
-        android:contentDescription="Arrow Left Image"
-        android:src="@drawable/arrow_left"
-        app:layout_constraintEnd_toStartOf="@+id/nrTwo"
-        app:layout_constraintTop_toBottomOf="@+id/firstArrowRight"
-        />
 
     <ImageView
         android:id="@+id/nrThree"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:layout_marginTop="80dp"
-        android:layout_marginEnd="10dp"
+        android:layout_marginTop="60dp"
+        android:layout_marginEnd="60dp"
         android:contentDescription="Number Three"
         android:src="@drawable/three"
-        app:layout_constraintEnd_toStartOf="@+id/secondArrowLeft"
-        app:layout_constraintTop_toBottomOf="@+id/firstArrowRight" />
+        app:layout_constraintEnd_toStartOf="@+id/nrTwo"
+        app:layout_constraintTop_toBottomOf="@+id/nrZero" />
 
-    <ImageView
-        android:id="@+id/secondArrowDown"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginTop="10dp"
-        android:contentDescription="Arrow Down Image"
-        android:layout_marginStart="46dp"
-        android:src="@drawable/arrow_down"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/nrThree" />
 
     <ImageView
         android:id="@+id/nrFour"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="10dp"
+        android:layout_marginTop="58dp"
+        android:layout_marginEnd="60dp"
         android:contentDescription="Number Four"
         android:src="@drawable/four"
-        app:layout_constraintEnd_toStartOf="@+id/secondArrowLeft"
-        app:layout_constraintTop_toBottomOf="@+id/secondArrowDown" />
-
-    <ImageView
-        android:id="@+id/secondArrowRight"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="96dp"
-        android:contentDescription="Arrow Right Image"
-        android:src="@drawable/arrow_right"
-        app:layout_constraintStart_toEndOf="@+id/nrFour"
-        app:layout_constraintTop_toBottomOf="@+id/secondArrowLeft"
-        />
+        app:layout_constraintEnd_toStartOf="@+id/nrFive"
+        app:layout_constraintTop_toBottomOf="@+id/nrThree" />
 
 
     <ImageView
@@ -175,23 +106,12 @@
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_marginTop="58dp"
-        android:layout_marginStart="10dp"
+        android:layout_marginEnd="60dp"
         android:contentDescription="Number Five"
         android:src="@drawable/five"
-        app:layout_constraintStart_toEndOf="@+id/secondArrowRight"
+        app:layout_constraintEnd_toStartOf="@+id/nrSix"
         app:layout_constraintTop_toBottomOf="@+id/nrTwo" />
 
-    <ImageView
-        android:id="@+id/thirdArrowRight"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="96dp"
-        android:contentDescription="Arrow Right Image"
-        android:src="@drawable/arrow_right"
-        app:layout_constraintStart_toEndOf="@+id/nrFive"
-        app:layout_constraintTop_toBottomOf="@+id/firstArrowLeft"
-        />
 
     <ImageView
         android:id="@+id/nrSix"
@@ -204,16 +124,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/nrOne" />
 
-    <ImageView
-        android:id="@+id/thirdArrowDown"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginTop="10dp"
-        android:contentDescription="Arrow Down Image"
-        android:layout_marginEnd="46dp"
-        android:src="@drawable/arrow_down"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/nrSix" />
 
     <ImageView
         android:id="@+id/nrSeven"
@@ -226,73 +136,42 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/nrSix" />
 
-    <ImageView
-        android:id="@+id/thirdArrowLeft"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginTop="100dp"
-        android:contentDescription="Arrow Left Image"
-        android:src="@drawable/arrow_left"
-        app:layout_constraintEnd_toStartOf="@+id/nrSeven"
-        app:layout_constraintTop_toBottomOf="@+id/thirdArrowRight"
-        />
 
     <ImageView
         android:id="@+id/nrEight"
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_marginTop="58dp"
-        android:layout_marginEnd="10dp"
+        android:layout_marginEnd="60dp"
         android:contentDescription="Number Eight"
         android:src="@drawable/eight"
-        app:layout_constraintEnd_toStartOf="@+id/thirdArrowLeft"
+        app:layout_constraintEnd_toStartOf="@+id/nrSeven"
         app:layout_constraintTop_toBottomOf="@+id/nrFive" />
 
-    <ImageView
-        android:id="@+id/forthArrowLeft"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginTop="100dp"
-        android:contentDescription="Arrow Left Image"
-        android:src="@drawable/arrow_left"
-        app:layout_constraintEnd_toStartOf="@+id/nrEight"
-        app:layout_constraintTop_toBottomOf="@+id/secondArrowRight"
-        />
 
     <ImageView
         android:id="@+id/nrNine"
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_marginTop="58dp"
-        android:layout_marginEnd="10dp"
+        android:layout_marginEnd="60dp"
         android:contentDescription="Number Nine"
         android:src="@drawable/nine"
-        app:layout_constraintEnd_toStartOf="@+id/forthArrowLeft"
+        app:layout_constraintEnd_toStartOf="@+id/nrEight"
         app:layout_constraintTop_toBottomOf="@+id/nrFour" />
 
-    <ImageView
-        android:id="@+id/forthArrowDown"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginTop="10dp"
-        android:contentDescription="Arrow Down Image"
-        android:layout_marginStart="46dp"
-        android:src="@drawable/arrow_down"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/nrNine" />
+
 
     <ImageView
         android:id="@+id/nrTen"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="10dp"
+        android:layout_marginTop="55dp"
+        android:layout_marginEnd="60dp"
         android:contentDescription="Number Ten"
         android:src="@drawable/ten"
-        app:layout_constraintEnd_toStartOf="@+id/forthArrowLeft"
-        app:layout_constraintTop_toBottomOf="@+id/forthArrowDown" />
+        app:layout_constraintEnd_toStartOf="@+id/nrEight"
+        app:layout_constraintTop_toBottomOf="@+id/nrNine" />
 
     <ProgressBar
         android:id="@+id/progressBar"
