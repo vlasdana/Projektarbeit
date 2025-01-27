@@ -1,6 +1,10 @@
 package com.example.voiceadapt
 
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -9,6 +13,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.ProgressBar
@@ -241,6 +246,14 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         progressBar.progress = progressPercentage
         hideAllColorDots()
 
+        // Reset fox position
+        val fuxiePlay = findViewById<ImageView>(R.id.fuxiePlay)
+        val initialFoxX = resources.getDimension(R.dimen.initial_fox_x)
+        val initialFoxY = resources.getDimension(R.dimen.initial_fox_y)
+        fuxiePlay.x = initialFoxX
+        fuxiePlay.y = initialFoxY
+        fuxiePlay.visibility = View.VISIBLE
+
         speechRecognizer.cancel()
         speechRecognizer.destroy()
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
@@ -288,6 +301,8 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // Update progress
         progressPercentage = ((currentColorIndex.toFloat() / colorList.size) * 100).toInt()
         progressBar.progress = progressPercentage
+
+        moveFoxToNextColor()
 
         if (currentColorIndex < colorList.size) {
             coroutineScope.launch {
@@ -436,5 +451,65 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         speechRecognizer.destroy()
         coroutineScope.cancel()
         super.onDestroy()
+    }
+
+    private fun moveFoxToNextColor() {
+        val fuxiePlay = findViewById<ImageView>(R.id.fuxiePlay)
+
+        fuxiePlay.visibility = ImageView.VISIBLE
+
+        val targetView = when (currentColorIndex) {
+            0 -> redBall
+            1 -> greenBall
+            2 -> blueBall
+            3 -> yellowBall
+            4 -> pinkBall
+            5 -> violetBall
+            6 -> orangeBall
+            7 -> brownBall
+            8 -> blackBall
+            9 -> whiteBall
+            10 -> findViewById(R.id.forestImage)
+            else -> null
+        }
+
+        targetView?.let { view ->
+            val parentLocation = IntArray(2)
+            val targetLocation = IntArray(2)
+
+            val offsetInDp = 40  // this value controls how much lower the fox moves
+            // Transform offset from dp in px
+            val offsetInPx = (offsetInDp * resources.displayMetrics.density).toInt()
+
+            // Obtain parent and target location
+            (view.parent as View).getLocationOnScreen(parentLocation)
+            view.getLocationOnScreen(targetLocation)
+
+            // Calculate relative coordinates to parent
+            val targetX = (targetLocation[0] - parentLocation[0]).toFloat() + view.width / 2 - fuxiePlay.width / 2
+            // val targetY = (targetLocation[1] - parentLocation[1]).toFloat() + offsetInPx - fuxiePlay.width
+            val targetY = (targetLocation[1] - parentLocation[1]).toFloat() + offsetInPx - fuxiePlay.width
+
+            val animatorX = ObjectAnimator.ofFloat(fuxiePlay, "x", fuxiePlay.x, targetX)
+            val animatorY = ObjectAnimator.ofFloat(fuxiePlay, "y", fuxiePlay.y, targetY)
+
+            AnimatorSet().apply {
+                playTogether(animatorX, animatorY)
+                duration = 500
+
+                // Add listener for fox to disappear
+                addListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        super.onAnimationEnd(animation)
+                        if (currentColorIndex == 10) {
+                            //Fox becomes invisible after reaching the forest target
+                            fuxiePlay.visibility = View.INVISIBLE
+                        }
+                    }
+                })
+
+                start()
+            }
+        }
     }
 }
