@@ -10,6 +10,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.ProgressBar
@@ -250,6 +251,14 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         progressBar.progress = progressPercentage
         hideAllNumberImages()
 
+        // Reset fox position
+        val fuxiePlay = findViewById<ImageView>(R.id.fuxiePlay)
+        val initialFoxX = resources.getDimension(R.dimen.initial_fox_x)
+        val initialFoxY = resources.getDimension(R.dimen.initial_fox_y)
+        fuxiePlay.x = initialFoxX
+        fuxiePlay.y = initialFoxY
+        fuxiePlay.visibility = View.VISIBLE
+
         speechRecognizer.cancel()
         speechRecognizer.destroy()
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
@@ -459,8 +468,13 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun moveFoxToNextNumber() {
         val fuxiePlay = findViewById<ImageView>(R.id.fuxiePlay)
-        fuxiePlay.visibility = ImageView.VISIBLE
 
+        // Verifică dacă a ajuns la cifra 10 (target final)
+        if (currentNumberIndex == 11) {
+            fuxiePlay.visibility = View.INVISIBLE // Ascunde avatarul
+            return // Iese din funcție
+        }
+        fuxiePlay.visibility = ImageView.VISIBLE
 
         val targetView = when (currentNumberIndex) {
             0 -> nrZero
@@ -473,16 +487,31 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             7 -> nrSeven
             8 -> nrEight
             9 -> nrNine
-            10 -> findViewById(R.id.forestImage) //or nrTen ??
+            10 -> nrTen
+            11 -> findViewById(R.id.forestImage) //or nrTen ??
             else -> null
         }
 
         targetView?.let { view ->
-            val location = IntArray(2)
-            view.getLocationOnScreen(location)
+            //val location = IntArray(2)
+            //view.getLocationOnScreen(location)
+            val parentLocation = IntArray(2)
+            val targetLocation = IntArray(2)
 
-            val targetX = location[0].toFloat() + view.width / 2 - fuxiePlay.width / 2
-            val targetY = location[1].toFloat() - view.width * 2 - view.width / 2
+            val offsetInDp = 40  // this value controls how much lower the fox moves
+            // Transformă offsetul din dp în px
+            val offsetInPx = (offsetInDp * resources.displayMetrics.density).toInt()
+
+            // Obține locația părintelui și a targetului
+            (view.parent as View).getLocationOnScreen(parentLocation)
+            view.getLocationOnScreen(targetLocation)
+
+            // Calculează coordonatele țintei relative la părinte
+            val targetX = (targetLocation[0] - parentLocation[0]).toFloat() + view.width / 2 - fuxiePlay.width / 2
+            val targetY = (targetLocation[1] - parentLocation[1]).toFloat() + offsetInPx - fuxiePlay.width
+           // val targetX = location[0].toFloat() + view.width / 2 - fuxiePlay.width / 2
+           // val targetY = location[1].toFloat() + offsetInPx
+           // val targetY = location[1].toFloat() - view.width * 2 - view.width / 2
 
             val animatorX = ObjectAnimator.ofFloat(fuxiePlay, "x", fuxiePlay.x, targetX)
             val animatorY = ObjectAnimator.ofFloat(fuxiePlay, "y", fuxiePlay.y, targetY)

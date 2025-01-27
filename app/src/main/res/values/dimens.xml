@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Define initial position for the fox -->
+    <dimen name="initial_fox_x">40dp</dimen> <!-- layout_marginStart -->
+    <dimen name="initial_fox_y">64dp</dimen> <!-- Approximate y-position -->
+</resources>
