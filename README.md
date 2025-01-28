@@ -19,7 +19,8 @@ This project emphasizes the significance and impact of technological innovation 
 - **Speech Recognition:** Google Speech Recognizer API
 - **Text-to-Speech:** Android Text-to-Speech
 - **UI Components:** ConstraintLayout, Buttons, ImageViews, and ProgressBar
-- **Coroutine Management:** Kotlin Coroutines for smooth asynchronous operations
+- **Avatar Animations:** Android Animator
+- **Coroutine Management:** Kotlinx Coroutines for smooth asynchronous operations
 
 ## Core functionalities
 
@@ -34,19 +35,21 @@ This project emphasizes the significance and impact of technological innovation 
    - **Colors Level:** Teaches basic color names in English through an engaging, repeat-after-me game.
    - **Numbers Level:** This Activity is analogous to the Colors Activity, sharing a similar structure and functionality, with the focus shifted to teaching basic numbers in English.
 
-5. **Accessibility and Adaptability:** Designed for children and users with motor disabilities, making the learning process more inclusive.
+5.**Dynamic Avatar Interaction:** Features a dynamic avatar that moves from one element to another in response to the user's correct answers. This provides visual feedback, enhances engagement, and creates a more interactive and rewarding learning experience.
 
-6. **Replay and Navigation:** Users can replay levels or navigate back to the main menu easily.
+6. **Accessibility and Adaptability:** Designed for children and users with motor disabilities, making the learning process more inclusive.
 
-7. **Dynamic Speech Recognition:** Employs flexible word-matching to handle variations in pronunciation and accents.
+7. **Replay and Navigation:** Users can replay levels or navigate back to the main menu easily.
 
-8. **Error handling:** Controlled delays to synchronize TTS and Speech Recognizer.
+8. **Dynamic Speech Recognition:** Employs flexible word-matching to handle variations in pronunciation and accents.
+
+9. **Error handling:** Controlled delays to synchronize TTS and Speech Recognizer.
    Toast messages for user guidance on errors.
 
-9. **UI Interaction**
-   Play and Back buttons for touch-based navigation.
-   Visual cues (e.g., number and color images) for enhanced engagement.
-   Toast messages for feedback and encouragement.
+10. **UI Interaction**
+    Play and Back buttons for touch-based navigation.
+    Visual cues (e.g., number and color images) for enhanced engagement.
+    Toast messages for feedback and encouragement.
 
 ## Setup and Installation
 
@@ -56,9 +59,14 @@ This project emphasizes the significance and impact of technological innovation 
 git clone  https://github.com/vlasdana/Projektarbeit.git`
 ```
 
-2. Open the project in **Android Studio.**
+2. Open the project in **Android Studio Koala**, or a compatible version.
 3. Sync the Gradle files to install dependencies.
-4. Ensure you have the correct version of Koala (1.3.0) installed to run the project.
+4. Ensure your environment matches the following requirements:
+
+   - JDK: Version 1.8 or higher.
+   - Android SDK: Level 34 (compileSdk and targetSdk).
+   - Minimum SDK: 21.
+
 5. Connect a physical device or start an Android emulator. (physical device recomended)
 6. Run the application using the **Run button** in Android Studio.
 
@@ -217,6 +225,8 @@ override fun onDestroy() {
 **Expanded Levels:** Add more levels with varied themes (e.g., shapes, animals, and objects).
 
 **New Features:** Implement new functions, such as the ability to resume the game from a specific point.
+
+**Advanced Avatar Movement:** Develop more complex and realistic avatar movements by leveraging external technologies such as motion libraries or animation frameworks, creating a more immersive and visually engaging experience for users.
 
 **Enhanced Feedback:** Integrate dynamic voice customization for user-specific preferences.
 
