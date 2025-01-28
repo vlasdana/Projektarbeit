@@ -178,7 +178,7 @@ override fun onDestroy() {
 
 **Solution:** Added controlled delays and lifecycle management for better synchronization.
 
-- Despite the implemented solution, certain words, particularly short single-syllable ones like "two" or "six," are sometimes not correctly identified by the Speech Recognizer. To mitigate this issue, it is recommended to pronounce the word along with an adjacent phrase, such as "number two" or "this is six," to improve recognition accuracy.
+- Despite the implemented solution, certain words, particularly short single-syllable ones like "two" or "six," are sometimes not correctly identified by the Speech Recognizer. To mitigate this issue, it is recommended to **pronounce the word along with an adjacent phrase**, such as **"number two"** or **"this is six,"** to improve recognition accuracy.
 
 3. **Simultaneous Inputs**
 
