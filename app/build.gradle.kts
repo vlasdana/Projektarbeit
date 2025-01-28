@@ -54,8 +54,12 @@ android {
 dependencies {
     implementation("androidx.appcompat:appcompat:1.3.1")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("ai.picovoice:porcupine-android:3.0.1")
-    implementation("ai.picovoice:picovoice-android:3.0.1")
+    implementation("ai.picovoice:porcupine-android:3.0.1") {
+        exclude(group = "ai.picovoice")
+    }
+    implementation("ai.picovoice:picovoice-android:3.0.1") {
+        exclude(group = "ai.picovoice")
+    }
     implementation(libs.androidx.ui.graphics.android)
     implementation(libs.androidx.foundation.android)
     implementation(libs.androidx.material3.android)
