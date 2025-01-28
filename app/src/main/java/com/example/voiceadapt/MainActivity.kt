@@ -163,7 +163,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             textToSpeech?.language = Locale("de", "DE")
-            textToSpeech?.setSpeechRate(1.5f)
+            textToSpeech?.setSpeechRate(2f)
             isTTSReady = true // Mark TTS as ready
         } else {
             isTTSReady = false

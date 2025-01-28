@@ -58,8 +58,9 @@ git clone  https://github.com/vlasdana/Projektarbeit.git`
 
 2. Open the project in **Android Studio.**
 3. Sync the Gradle files to install dependencies.
-4. Connect a physical device or start an Android emulator. (physical device recomended)
-5. Run the application using the **Run button** in Android Studio.
+4. Ensure you have the correct version of Koala (1.3.0) installed to run the project.
+5. Connect a physical device or start an Android emulator. (physical device recomended)
+6. Run the application using the **Run button** in Android Studio.
 
 ## App structure
 
@@ -123,7 +124,7 @@ isColorMatch(spokenText: String, expectedColor: String)
 resetGameAndStart()
 ```
 
-### Kotlin Coroutines
+### Kotlinx Coroutines
 
 Kotlin Coroutines are crucial for efficiently handling asynchronous tasks in this application. They ensure a responsive user experience by managing Text-to-Speech (TTS), Speech Recognition, and UI updates with lightweight, structured concurrency, offering a simpler and more efficient alternative to traditional threading.
 
@@ -216,8 +217,6 @@ override fun onDestroy() {
 **Expanded Levels:** Add more levels with varied themes (e.g., shapes, animals, and objects).
 
 **New Features:** Implement new functions, such as the ability to resume the game from a specific point.
-
-**Avatar Animation:** Introduce animations for the avatar to make interactions more engaging and dynamic.
 
 **Enhanced Feedback:** Integrate dynamic voice customization for user-specific preferences.
 
