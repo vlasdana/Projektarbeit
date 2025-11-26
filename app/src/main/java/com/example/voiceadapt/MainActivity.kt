@@ -147,29 +147,28 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 e.printStackTrace()
             }
         }
-        // initialising TextToSpeech
-        textToSpeech = TextToSpeech(this, { status ->
-            if(status == TextToSpeech.SUCCESS){
-                textToSpeech?.setOnUtteranceProgressListener(object: UtteranceProgressListener(){
-                    override fun onDone(utteranceId: String?) {}
-                    override fun onStart(utteranceId: String?) {}
-                    override fun onError(utteranceId: String?) {}
-                })
-                textToSpeech?.language = Locale("de", "DE")
-            }
-        })
     }
 
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            textToSpeech?.language = Locale("de", "DE")
-            textToSpeech?.setSpeechRate(2f)
-            isTTSReady = true // Mark TTS as ready
-        } else {
-            isTTSReady = false
-            intentTextView.text = "TTS initialization failed."
-        }
-    }
+
+ override fun onInit(status: Int) {
+     if (status == TextToSpeech.SUCCESS) {
+         textToSpeech?.language = Locale("de", "DE")
+         textToSpeech?.setSpeechRate(1.3f)
+
+         textToSpeech?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+             override fun onStart(utteranceId: String?) {}
+             override fun onDone(utteranceId: String?) {}
+             override fun onError(utteranceId: String?) {}
+         })
+
+         isTTSReady = true
+         speakAfterTTSReady()
+     } else {
+         isTTSReady = false
+         intentTextView.text = "TTS initialization failed."
+     }
+ }
+
 
 
     private fun startListening() {
@@ -180,7 +179,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         isListening = true
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "de-DE") // Setăm limba germană
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "de-DE")
             putExtra(RecognizerIntent.EXTRA_PROMPT, "Jetzt bitte sprechen...")
         }
 
@@ -212,14 +211,26 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             spokenText.contains("spielen", ignoreCase = true)
                     || spokenText.contains("ich möchte spielen", ignoreCase = true)
                     || spokenText.contains("ja", ignoreCase = true) -> {
+
                 stopListening()
-
-                runOnUiThread { intentTextView.text = "" } // Clear the error message before transitioning
-
-                speak("Super! Spielen wir!")
+                runOnUiThread { intentTextView.text = "" }
 
                 coroutineScope.launch {
-                    delay(500) // Allow the SpeechRecognizer to cleanly stop
+
+                    textToSpeech?.speak(
+                        "Super! Spielen wir!",
+                        TextToSpeech.QUEUE_FLUSH,
+                        null,
+                        "go_to_choice"
+                    )
+
+                    // Waiting to stop TTS
+                    delay(50)
+                    while (textToSpeech?.isSpeaking == true) {
+                        delay(100)
+                    }
+
+                    // After TTS is done we go to ChoiceActivity
                     try {
                         speechRecognizer?.destroy()
                         val intent = Intent(this@MainActivity, ChoiceActivity::class.java)
@@ -229,8 +240,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         e.printStackTrace()
                     }
                 }
+
                 return
             }
+
 
             else -> {
                 speak("Bitte sag Ja oder Nein.")
@@ -315,19 +328,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
     }
 
-    private fun initializeTTS() {
-        textToSpeech = TextToSpeech(this) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                textToSpeech?.language = Locale("de", "DE")
-                textToSpeech?.setSpeechRate(1.5f)
-                isTTSReady = true // Marchez TTS ca fiind inițializat
-                speakAfterTTSReady() // Continuă cu mesajele vocale
-            } else {
-                isTTSReady = false
-                intentTextView.text = "TTS initialization failed."
-            }
-        }
-    }
+  private fun initializeTTS() {
+      textToSpeech?.shutdown()          // to avoid any possible cached TTS instance
+      textToSpeech = TextToSpeech(this, this)  // this = MainActivity, which implements OnInitListener
+  }
+
 
     private fun speakAfterTTSReady() {
         coroutineScope.launch {

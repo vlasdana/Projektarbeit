@@ -12,6 +12,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
@@ -105,7 +106,7 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             textToSpeech.language = Locale.GERMAN
-            textToSpeech.setSpeechRate(2f)
+            textToSpeech.setSpeechRate(1.3f)
 
             textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {}
@@ -139,7 +140,7 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         coroutineScope.launch {
 
             speakInGerman("Ich werde dir eine Zahl sagen, und du musst sie wiederholen.")
-            delay(1500)
+            delay(1000)
             presentNumber()
         }
     }
@@ -148,8 +149,9 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val number = numberList[currentNumberIndex]
         showNumberImage(number)
         speakInGerman("Das ist die Zahl ${getGermanNumber(number)}.")
-        delay(1200)
-        speakInEnglish("This is $number. Now repeat after me: $number.", "number_instruction_$number")
+        delay(200)
+        speakInEnglish( "$number. Now repeat after me: This is $number.",
+            "number_instruction_$number")
     }
 
     private fun startListeningForStartCommand() {
@@ -201,45 +203,57 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 }
             }
 
+
             override fun onResults(results: Bundle?) {
                 isListening = false
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                val spokenText = matches?.get(0)?.lowercase(Locale.GERMAN) ?: ""
-                val spokenTextEN = matches?.get(0)?.lowercase(Locale.ENGLISH) ?: ""
+
+                // Debug: log all candidates
+                matches?.forEach {
+                    Log.d("SR_DEBUG", "Heard: $it")
+                }
+
+                val primary = matches?.firstOrNull()?.lowercase(Locale.GERMAN) ?: ""
+                val expectedNumber = numberList[currentNumberIndex]
+
+                // Check all candidates for a correct number, not just the first one
+                val isCorrectNumber = matches?.any { candidate ->
+                    isNumberMatch(candidate, expectedNumber)
+                } == true
 
                 when {
-                    //  Start game (at the beginning or after resuming)
-                    spokenText in listOf("play", "spiel", "spielen", "start", "nochmal", "wiederholen") -> {
+                    // Start game (at the beginning or after resuming)
+                    primary in listOf("play", "spiel", "spielen", "start", "nochmal", "wiederholen") -> {
                         showToastMessage("Spiel startet!")
-                        resetGameAndStart()  //  reset and start game
+                        resetGameAndStart()
                     }
 
                     // Return to the main menu
-                    spokenText in listOf("zurück", "zurueck", "back") -> {
+                    primary in listOf("zurück", "zurueck", "back") -> {
                         showToastMessage("Zurück zum Menü!")
                         navigateBack()
                     }
 
-                    //  Check correct number
-                    isNumberMatch(spokenTextEN, numberList[currentNumberIndex]) -> {
-                        showToastMessage("Gut gemacht!")
+                    // Check correct number (using all recognition candidates)
+                    isCorrectNumber -> {
+                         showToastMessage("Gut gemacht!")
                         nextNumber()
                     }
 
-                    //  Feedback for wrong answer
+                    // Feedback for wrong answer
                     else -> {
                         showToastMessage("Das war nicht korrekt. Versuche es nochmal.")
                         coroutineScope.launch {
                             delay(2000)
-                            if(!isListening){
+                            if (!isListening) {
                                 showToastMessage("Versuche es erneut!")
-                                startListeningForNumber(numberList[currentNumberIndex]) // Relaunch listening()
+                                startListeningForNumber(numberList[currentNumberIndex])
                             }
                         }
-
                     }
                 }
             }
+
 
         })
     }
@@ -276,23 +290,31 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun isNumberMatch(spokenText: String, expectedNumber: String): Boolean {
         val numberVariations = mapOf(
-            "zero" to listOf("zero", "sero", "ziero"),
-            "one" to listOf("one", "wan", "won","uan"),
-            "two" to listOf("du", "two", "too", "tu", "thu", "twu", "tzu", "do"),
-            "three" to listOf("free","three", "thri", "tree"),
-            "four" to listOf("four", "for", "foar", "fo", "vo", "vor"),
-            "five" to listOf("five", "faiv", "fiv","aiv"),
-            "six" to listOf("six", "siks", "sixx"),
-            "seven" to listOf("seven", "sevn", "sewen"),
-            "eight" to listOf("aid","eight", "ate", "eit", "age", "echt"),
-            "nine" to listOf("nein","nine", "nain", "nin","ain"),
-            "ten" to listOf("den","ten", "tenn", "tn","denn","then")
+            "zero" to listOf("zero", "sero", "ziero","0"),
+            "one" to listOf("one", "wan", "won","uan","aan","1"),
+            "two" to listOf("duu", "two", "too", "tuu", "thu", "twu", "tzu", "doo","uu","to","tu","2"),
+            "three" to listOf("free","three", "thri", "tree","3"),
+            "four" to listOf("four", "for", "foar", "fo", "vo", "vor","foo","4"),
+            "five" to listOf("five", "faiv", "fiv","aiv","faif","aif","5"),
+            "six" to listOf("six", "siks", "sixx","6"),
+            "seven" to listOf("seven", "sevn", "sewen","7"),
+            "eight" to listOf("aid","eight", "ate", "eit", "age", "echt","8"),
+            "nine" to listOf("nein","nine", "nain", "nin","ain","9"),
+            "ten" to listOf("den","ten", "tenn", "tn","denn","then","10")
         )
+
         // Normalize input text
         val normalizedText = spokenText.trim().lowercase(Locale.ENGLISH)
-        return numberVariations[expectedNumber]?.any { variation ->
+
+        val variations = numberVariations[expectedNumber] ?: return false
+
+        // First: exact match on whole text
+        if (variations.any { normalizedText == it }) return true
+
+        // Then: allow matches inside a longer phrase, e.g. "this is two"
+        return variations.any { variation ->
             normalizedText.contains(variation)
-        } ?: false
+        }
     }
 
     private fun nextNumber() {
@@ -434,7 +456,7 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         textToSpeech.language = Locale.GERMAN
         textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, null, "german_speech")
         while (textToSpeech.isSpeaking) {
-            delay(700)
+            delay(100)
         }
     }
 
@@ -443,11 +465,24 @@ class NumbersActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, null, utteranceId)
     }
 
+
     private fun navigateBack() {
+        stopTTS()
+
+        try {
+            speechRecognizer.cancel()
+            speechRecognizer.destroy()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        coroutineScope.cancel()
+
         val intent = Intent(this, LevelsActivity::class.java)
         startActivity(intent)
         finish()
     }
+
 
     private fun stopTTS() {
         if (textToSpeech.isSpeaking) {

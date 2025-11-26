@@ -13,6 +13,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
@@ -103,7 +104,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             textToSpeech.language = Locale.GERMAN
-            textToSpeech.setSpeechRate(2f)
+            textToSpeech.setSpeechRate(1.3f)
             // Set listener for TTS
             textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {}
@@ -132,7 +133,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         coroutineScope.launch {
 
             speakInGerman("Ich werde dir eine Farbe sagen, und du musst sie wiederholen.")
-            delay(1500)
+            delay(1000)
             presentColor()
         }
     }
@@ -141,7 +142,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val color = colorList[currentColorIndex]
         showColorDot(color)
         speakInGerman("Das ist die Farbe ${getGermanColor(color)}.")
-        delay(1200)
+        delay(200)
         speakInEnglish("This is $color. Now repeat after me: $color.", "color_instruction_$color")
 
     }
@@ -196,24 +197,36 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             override fun onResults(results: Bundle?) {
                 isListening = false
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                val spokenText = matches?.get(0)?.lowercase(Locale.GERMAN) ?: ""
-                val spokenTextEN = matches?.get(0)?.lowercase(Locale.ENGLISH) ?: ""
+
+                // 🔥 DEBUG: See everything that Google thinks the user said
+                matches?.forEach {
+                    Log.d("SR_DEBUG", "Heard (colors): $it")
+                }
+
+                // First candidate is still used for commands (Play / Zurück)
+                val primary = matches?.firstOrNull()?.lowercase(Locale.GERMAN) ?: ""
+                val expectedColor = colorList[currentColorIndex]
+
+                // Check ALL recognition candidates for a correct color
+                val isCorrectColor = matches?.any { candidate ->
+                    isColorMatch(candidate, expectedColor)
+                } == true
 
                 when {
                     //  Start game (at the beginning or after resuming)
-                    spokenText in listOf("play", "spiel", "spielen", "start", "nochmal", "wiederholen") -> {
+                    primary in listOf("play", "spiel", "spielen", "start", "nochmal", "wiederholen") -> {
                         showToastMessage("Spiel startet!")
                         resetGameAndStart()  //  reset and start game
                     }
 
                     // Return to the main menu
-                    spokenText in listOf("zurück", "zurueck", "back") -> {
+                    primary in listOf("zurück", "zurueck", "back") -> {
                         showToastMessage("Zurück zum Menü!")
                         navigateBack()
                     }
 
-                    // Check correct color
-                    isColorMatch(spokenText, colorList[currentColorIndex]) -> {
+                    //  Check correct color (using ALL matches, not only the first)
+                    isCorrectColor -> {
                         showToastMessage("Gut gemacht!")
                         nextColor()
                     }
@@ -221,19 +234,16 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     //  Feedback for wrong answer
                     else -> {
                         showToastMessage("Das war nicht korrekt. Versuche es nochmal.")
-                        coroutineScope.launch{
+                        coroutineScope.launch {
                             delay(2000)
-                            if(!isListening){
+                            if (!isListening) {
                                 showToastMessage("Versuche es erneut!")
                                 startListeningForColor(colorList[currentColorIndex])
                             }
                         }
-
                     }
                 }
             }
-
-
         })
     }
 
@@ -269,7 +279,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     //  Compare the user's pronunciation with the accepted variations
     private fun isColorMatch(spokenText: String, expectedColor: String): Boolean {
         val colorVariations = mapOf(
-            "red" to listOf("red", "redd", "rad", "wred"),
+            "red" to listOf("red", "redd", "rad", "wred","eed"),
             "green" to listOf("green", "grin", "gren"),
             "blue" to listOf("blue", "blu", "bluu", "blou"),
             "yellow" to listOf("yellow", "yello", "yelow"),
@@ -278,7 +288,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             "orange" to listOf("orange", "oranj", "orenge"),
             "brown" to listOf("brown", "broun", "braun", "breun"),
             "black" to listOf("black", "blak", "bleck"),
-            "white" to listOf("white", "whait", "whyte","uait")
+            "white" to listOf("white", "whait", "whyte","uait","uyt")
         )
 
         // Check if the spoken text is a variation of the color
@@ -419,7 +429,7 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         textToSpeech.language = Locale.GERMAN
         textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, null, "german_speech")
         while (textToSpeech.isSpeaking) {
-            delay(700)
+            delay(100)
         }
     }
 
@@ -428,11 +438,25 @@ class ColorsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, null, utteranceId)
     }
 
+
     private fun navigateBack() {
+        // Oprim tot ce ține de voce înainte să schimbăm activitatea
+        stopTTS()
+
+        try {
+            speechRecognizer.cancel()
+            speechRecognizer.destroy()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        coroutineScope.cancel()  // oprim corutinele din ColorsActivity
+
         val intent = Intent(this, LevelsActivity::class.java)
         startActivity(intent)
         finish()
     }
+
 
     private fun stopTTS() {
         if (textToSpeech.isSpeaking) {

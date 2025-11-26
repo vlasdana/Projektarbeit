@@ -82,7 +82,7 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             textToSpeech.language = Locale.GERMAN
-            textToSpeech.setSpeechRate(1.5f)
+            textToSpeech.setSpeechRate(1.3f)
 
             // Listener for TTS
             textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
@@ -114,28 +114,51 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 override fun onError(utteranceId: String?) {}
             })
 
-            startInitialMessages()
+            // buffer before TTS Messages start
+            coroutineScope.launch {
+                delay(200)
+                startInitialMessages()
+            }
         }
     }
 
-    private fun startInitialMessages() {
-        coroutineScope.launch {
-            speak("Diese sind die Commandos für den Spiel", "intro_message")
-            speak(
-                "Um das Spiel zu starten, drück auf den Play-Knopf oder sag 'Play'.",
-                "play_instruction"
-            )
-            speak(
-                "Um zurückzugehen, drück auf den Zurück-Knopf oder sag 'Zurück'.",
-                "back_instruction"
-            )
-        }
-    }
+   private fun startInitialMessages() {
+       coroutineScope.launch {
+
+           // Ensure no previous TTS message is still playing
+           stopTTS()
+
+           // 1. First message — clears any previous TTS queue
+           textToSpeech.speak(
+               "Diese sind die Commandos für den Spiel",
+               TextToSpeech.QUEUE_FLUSH,
+               null,
+               "intro_message"
+           )
+
+           // 2. Second message — added to the TTS queue
+           textToSpeech.speak(
+               "Um das Spiel zu starten, drück auf den Play-Knopf oder sag 'Play'.",
+               TextToSpeech.QUEUE_ADD,
+               null,
+               "play_instruction"
+           )
+
+           // 3. Third message — added after the second one
+           textToSpeech.speak(
+               "Um zurückzugehen, drück auf den Zurück-Knopf oder sag 'Zurück'.",
+               TextToSpeech.QUEUE_ADD,
+               null,
+               "back_instruction"
+           )
+       }
+   }
+
 
     private suspend fun speak(text: String, utteranceId: String) {
         textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
         while (textToSpeech.isSpeaking) {
-            delay(500) // Wait to stop talking
+            delay(100) // Wait to stop talking
         }
     }
 
@@ -262,13 +285,6 @@ class ChoiceActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // Reset UI
         updateTextColor(playText, R.color.black)
         updateTextColor(backText, R.color.black)
-
-       if (navigateFromLevelActivity) {
-           navigateFromLevelActivity = false // Reset indicator
-           startInitialMessages()
-       } else if (!isListening && !textToSpeech.isSpeaking) {
-           startInitialMessages()
-       }
 
     }
 

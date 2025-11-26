@@ -34,7 +34,7 @@ class LevelsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private lateinit var speechRecognizer: SpeechRecognizer
     private var playText: TextView? = null
     private var backText: TextView? = null
-    private var isListening = false  // Indicator pentru ascultare activă
+    private var isListening = false
 
     // Variable for tracking navigation from ColorsActivity or NumbersActivity
     private var navigateFromSubActivity = false
@@ -74,9 +74,7 @@ class LevelsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // Add tap functionality to the back button
         val backButton = findViewById<Button>(R.id.backButton)
         backButton.setOnClickListener {
-            val intent = Intent(this, ChoiceActivity::class.java)
-            startActivity(intent)
-             finish() // Closes the LevelsActivity and returns to the previous one
+           navigateBack()
         }
 
     }
@@ -110,7 +108,7 @@ class LevelsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             textToSpeech.language = Locale.GERMAN
-            textToSpeech.setSpeechRate(1.5f)
+            textToSpeech.setSpeechRate(1.3f)
 
             // Listener for TTS
             textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
@@ -142,28 +140,50 @@ class LevelsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 override fun onError(utteranceId: String?) {}
             })
 
-            startInitialMessages()
+            // buffer before TTS Messages start
+            coroutineScope.launch {
+                delay(200)
+                startInitialMessages()
+            }
         }
     }
 
-    private fun startInitialMessages() {
-        coroutineScope.launch {
-            speak("Super!", "intro_message")
-            speak(
-                "Was möchtest du spielen? Sag einfach „Farben“ oder „Zahlen“. Oder drück auf den Play-Knopf.",
-                "play_instruction"
-            )
-            speak(
-                "Um zurückzugehen, drück auf den Zurück-Knopf oder sag 'Zurück'.",
-                "back_instruction"
-            )
-        }
-    }
+  private fun startInitialMessages() {
+      coroutineScope.launch {
+          // Ensure no previous TTS message is still playing
+          stopTTS()
+
+          // 1. First message — clears any previous TTS queue
+          textToSpeech.speak(
+              "Super!",
+              TextToSpeech.QUEUE_FLUSH,
+              null,
+              "intro_message"
+          )
+
+          // 2. Second message — added to the TTS queu
+          textToSpeech.speak(
+              "Was möchtest du spielen? Sag einfach „Farben“ oder „Zahlen“. Oder drück auf den Play-Knopf.",
+              TextToSpeech.QUEUE_ADD,
+              null,
+              "play_instruction"
+          )
+
+          // 3. Third message — added after the second one
+          textToSpeech.speak(
+              "Um zurückzugehen, drück auf den Zurück-Knopf oder sag 'Zurück'.",
+              TextToSpeech.QUEUE_ADD,
+              null,
+              "back_instruction"
+          )
+      }
+  }
+
 
     private suspend fun speak(text: String, utteranceId: String) {
         textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
         while (textToSpeech.isSpeaking) {
-            delay(500) // Wait to stop talking
+            delay(100) // Wait to stop talking
         }
     }
 
@@ -315,12 +335,6 @@ class LevelsActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         updateTextColor(playText, R.color.black)
         updateTextColor(backText, R.color.black)
 
-        if (navigateFromSubActivity) {
-            navigateFromSubActivity = false // Reset indicator
-            startInitialMessages()
-        }else if(!isListening && !textToSpeech.isSpeaking){
-            startInitialMessages()
-        }
     }
 
     override fun onDestroy() {
